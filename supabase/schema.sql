@@ -7,7 +7,18 @@ ALTER TABLE public.leads
     ADD COLUMN IF NOT EXISTS telefone VARCHAR(50) UNIQUE,
     ADD COLUMN IF NOT EXISTS faturamento_mensal NUMERIC DEFAULT 0,
     ADD COLUMN IF NOT EXISTS nivel_urgencia VARCHAR(50) DEFAULT 'Normal',
-    ADD COLUMN IF NOT EXISTS score_ia INTEGER DEFAULT 0;
+    ADD COLUMN IF NOT EXISTS score_ia INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+
+-- Habilitar RLS para Leads
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+
+-- Política: Usuários logados podem ler, inserir e atualizar leads
+DROP POLICY IF EXISTS "auth_users_manage_leads" ON public.leads;
+CREATE POLICY "auth_users_manage_leads"
+  ON public.leads FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
 -- Índices de busca super-rápida pedidos pelo cliente
 CREATE INDEX IF NOT EXISTS idx_leads_telefone ON public.leads(telefone);
@@ -28,6 +39,16 @@ CREATE TABLE IF NOT EXISTS public.messages (
 -- Índice para a checagem de idempotência ser ultra-rápida
 CREATE INDEX IF NOT EXISTS idx_wa_message_id ON public.messages(wa_message_id);
 CREATE INDEX IF NOT EXISTS idx_messages_lead_id ON public.messages(lead_id);
+
+-- Habilitar RLS para Messages
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+-- Política: Usuários logados gerenciam todas as mensagens
+DROP POLICY IF EXISTS "auth_users_manage_messages" ON public.messages;
+CREATE POLICY "auth_users_manage_messages"
+  ON public.messages FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
 
 -- 4. TABELA DE TELEMETRIA (BI ANALYTICS)

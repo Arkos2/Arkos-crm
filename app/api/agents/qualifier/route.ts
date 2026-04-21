@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { QUALIFIER_SYSTEM_PROMPT, QUALIFIER_FIRST_MESSAGE } from "@/lib/ai/prompts/qualifier";
 import { ChatMessage, BANTCollection } from "@/lib/types/agent";
-import { saveMessage } from "@/lib/supabase/services/messages";
-import { updateLead } from "@/lib/supabase/services/leads";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -68,8 +67,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Salvar mensagem inicial da IA no banco
-      await saveMessage({
+      // Salvar mensagem inicial da IA no banco usando Admin Client
+      const adminClient = createAdminClient();
+      await adminClient.from('messages').insert({
         lead_id: leadId,
         role: "assistant",
         content: firstResponse.message,
@@ -79,10 +79,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(firstResponse);
     }
 
-    // 2. Salvar última mensagem do usuário (se houver)
+    // 2. Salvar última mensagem do usuário (se houver) com Admin Client
     const lastUserMessage = messages[messages.length - 1];
     if (lastUserMessage && lastUserMessage.role === "user" && leadId) {
-      await saveMessage({
+      const adminClient = createAdminClient();
+      await adminClient.from('messages').insert({
         lead_id: leadId,
         role: "user",
         content: lastUserMessage.content,
@@ -120,16 +121,17 @@ Use essas informações para personalizar a conversa.`;
 
     const parsed = parseClaude(rawText);
 
-    // 3. Salvar resposta da IA no banco
     if (leadId) {
-      await saveMessage({
+      // Salvar a mensagem da IA no banco com Admin Client
+      const adminClient = createAdminClient();
+      await adminClient.from('messages').insert({
         lead_id: leadId,
         role: "assistant",
         content: parsed.message,
         wa_message_id: `ai-${Date.now()}`,
       });
 
-      // 4. Atualizar o Lead com os dados BANT e Score
+      // Atualizar o Lead com os dados BANT e Score com Admin Client
       const bant = parsed.bant || {};
       const budget = bant.budget || 0;
       const authority = bant.authority || 0;
@@ -137,11 +139,11 @@ Use essas informações para personalizar a conversa.`;
       const timeline = bant.timeline || 0;
       const total = budget + authority + need + timeline;
 
-      await updateLead(leadId, {
+      await adminClient.from('leads').update({
         score_ia: total,
-        faturamento_mensal: bant.budget ? bant.budget * 1000 : undefined, // Exemplo de mapeamento
+        faturamento_mensal: bant.budget ? bant.budget * 1000 : undefined, 
         status: total >= 70 ? 'Qualificado' : 'Em Qualificação',
-      });
+      }).eq('id', leadId);
     }
 
     return NextResponse.json({
