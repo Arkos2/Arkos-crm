@@ -23,8 +23,8 @@ import {
   ChevronRight,
   LogOut,
   Bell,
-  Zap,
 } from "lucide-react";
+import Image from "next/image";
 
 interface NavItem {
   label: string;
@@ -140,12 +140,16 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         {/* Ícone logo */}
         <div
           className={cn(
-            "flex items-center justify-center rounded-xl shrink-0",
-            "bg-gradient-blue shadow-arkos-glow-blue",
-            collapsed ? "w-8 h-8" : "w-8 h-8"
+            "relative shrink-0 transition-all duration-300",
+            collapsed ? "w-8 h-8" : "w-10 h-10"
           )}
         >
-          <Zap className="h-4 w-4 text-white" />
+          <Image 
+            src="/logo.png"
+            alt="ARKOS Logo"
+            fill
+            className="object-contain"
+          />
         </div>
 
         {/* Nome */}

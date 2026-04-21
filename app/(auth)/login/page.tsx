@@ -9,6 +9,7 @@ import {
   Mail, Lock, Eye, EyeOff, Loader2,
   Zap, AlertCircle, ArrowRight, CheckCircle2,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -58,8 +59,13 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="relative flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-blue flex items-center justify-center shadow-arkos-glow-blue">
-            <Zap className="h-5 w-5 text-white" />
+          <div className="relative w-12 h-12 flex-shrink-0">
+            <Image
+              src="/logo.png"
+              alt="ARKOS Logo"
+              fill
+              className="object-contain drop-shadow-lg"
+            />
           </div>
           <div>
             <p className="text-lg font-black text-text-primary tracking-wide">ARKOS</p>
@@ -122,8 +128,13 @@ export default function LoginPage() {
 
           {/* Header mobile */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-gradient-blue flex items-center justify-center">
-              <Zap className="h-4 w-4 text-white" />
+            <div className="relative w-10 h-10 shrink-0">
+              <Image 
+                src="/logo.png"
+                alt="ARKOS Logo"
+                fill
+                className="object-contain"
+              />
             </div>
             <div>
               <p className="text-base font-black text-text-primary">ARKOS CRM</p>

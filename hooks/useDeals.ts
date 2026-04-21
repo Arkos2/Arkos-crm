@@ -47,7 +47,7 @@ export function useDeals(filters?: {
         (current: Deal[] | undefined) =>
           current?.map((d) =>
             d.id === dealId
-              ? { ...d, stage: newStage, stageEnteredAt: new Date().toISOString() }
+              ? { ...d, stage: newStage, stageEnteredAt: new Date().toISOString() } as Deal
               : d
           ),
         false
@@ -87,7 +87,7 @@ export function useDeals(filters?: {
       mutate(
         key,
         (current: Deal[] | undefined) =>
-          current?.map((d) => (d.id === dealId ? { ...d, ...updates } : d)),
+          current?.map((d) => (d.id === dealId ? { ...d, ...updates } as Deal : d)),
         false
       );
 

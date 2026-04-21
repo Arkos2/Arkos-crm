@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { useDeals } from "@/hooks/useDeals";
 import { PIPELINE_STAGES, MOCK_PIPELINE } from "@/lib/mock/deals";
 import { Button, Badge, Skeleton } from "@/components/ui";
+import { PipelineBoard } from "@/components/pipeline/PipelineBoard";
 import {
   Plus,
   Filter,

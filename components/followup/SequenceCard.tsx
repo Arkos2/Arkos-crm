@@ -4,7 +4,7 @@ import { Sequence } from "@/lib/types/followup";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { Badge, Button } from "@/components/ui";
 import {
-  Mail, MessageSquare, Phone, Linkedin,
+  Mail, MessageSquare, Phone, Share2,
   CheckSquare, MoreHorizontal, Play, Pause,
   Users, TrendingUp, Clock, Zap, Edit,
   Copy, Trash2,
@@ -15,7 +15,7 @@ const STEP_ICONS: Record<string, React.ElementType> = {
   email: Mail,
   whatsapp: MessageSquare,
   call: Phone,
-  linkedin: Linkedin,
+  linkedin: Share2,
   task: CheckSquare,
 };
 
