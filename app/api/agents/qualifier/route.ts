@@ -1,0 +1,172 @@
+import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+import { QUALIFIER_SYSTEM_PROMPT, QUALIFIER_FIRST_MESSAGE } from "@/lib/ai/prompts/qualifier";
+import { ChatMessage, BANTCollection } from "@/lib/types/agent";
+import { saveMessage } from "@/lib/supabase/services/messages";
+import { updateLead } from "@/lib/supabase/services/leads";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY!,
+});
+
+interface QualifierRequest {
+  leadId: string;
+  messages: ChatMessage[];
+  isFirstMessage?: boolean;
+  leadContext?: {
+    name?: string;
+    company?: string;
+    source?: string;
+  };
+}
+
+interface QualifierResponse {
+  message: string;
+  bant: Partial<BANTCollection>;
+  nextAction: "continue" | "schedule_meeting" | "send_materials" | "transfer_to_human";
+  confidence: number;
+  internalNote: string;
+  tokensUsed?: number;
+}
+
+function parseClaude(text: string): QualifierResponse {
+  try {
+    const json = JSON.parse(text);
+    return json;
+  } catch {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[0]);
+      } catch {
+        // fallback
+      }
+    }
+    return {
+      message: text,
+      bant: { budget: 0, authority: 0, need: 0, timeline: 0 },
+      nextAction: "continue",
+      confidence: 0,
+      internalNote: "Erro ao parsear resposta da IA",
+    };
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: QualifierRequest = await request.json();
+    const { leadId, messages, isFirstMessage, leadContext } = body;
+
+    // 1. Primeira mensagem — retornar template e salvar no banco
+    if (isFirstMessage && leadId) {
+      const firstResponse = parseClaude(QUALIFIER_FIRST_MESSAGE);
+
+      if (leadContext?.name) {
+        firstResponse.message = firstResponse.message.replace(
+          "Olá! 👋",
+          `Olá, ${leadContext.name}! 👋`
+        );
+      }
+
+      // Salvar mensagem inicial da IA no banco
+      await saveMessage({
+        lead_id: leadId,
+        role: "assistant",
+        content: firstResponse.message,
+        wa_message_id: `init-${Date.now()}`,
+      });
+
+      return NextResponse.json(firstResponse);
+    }
+
+    // 2. Salvar última mensagem do usuário (se houver)
+    const lastUserMessage = messages[messages.length - 1];
+    if (lastUserMessage && lastUserMessage.role === "user" && leadId) {
+      await saveMessage({
+        lead_id: leadId,
+        role: "user",
+        content: lastUserMessage.content,
+        wa_message_id: `msg-user-${Date.now()}`,
+      });
+    }
+
+    // ─── CHAMADA PARA ANTHROPIC ───
+    const anthropicMessages = messages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+    let systemPrompt = QUALIFIER_SYSTEM_PROMPT;
+    if (leadContext) {
+      systemPrompt += `\n\n## CONTEXTO DO LEAD ATUAL
+- Nome: ${leadContext.name || "Não informado"}
+- Empresa: ${leadContext.company || "Não informada"}
+- Fonte: ${leadContext.source || "Não informada"}
+
+Use essas informações para personalizar a conversa.`;
+    }
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: anthropicMessages,
+    });
+
+    const rawText =
+      response.content[0].type === "text" ? response.content[0].text : "";
+
+    const parsed = parseClaude(rawText);
+
+    // 3. Salvar resposta da IA no banco
+    if (leadId) {
+      await saveMessage({
+        lead_id: leadId,
+        role: "assistant",
+        content: parsed.message,
+        wa_message_id: `ai-${Date.now()}`,
+      });
+
+      // 4. Atualizar o Lead com os dados BANT e Score
+      const bant = parsed.bant || {};
+      const budget = bant.budget || 0;
+      const authority = bant.authority || 0;
+      const need = bant.need || 0;
+      const timeline = bant.timeline || 0;
+      const total = budget + authority + need + timeline;
+
+      await updateLead(leadId, {
+        score_ia: total,
+        faturamento_mensal: bant.budget ? bant.budget * 1000 : undefined, // Exemplo de mapeamento
+        status: total >= 70 ? 'Qualificado' : 'Em Qualificação',
+      });
+    }
+
+    return NextResponse.json({
+      ...parsed,
+      bant: {
+        budget: parsed.bant?.budget || 0,
+        authority: parsed.bant?.authority || 0,
+        need: parsed.bant?.need || 0,
+        timeline: parsed.bant?.timeline || 0,
+        total: (parsed.bant?.budget || 0) + (parsed.bant?.authority || 0) + (parsed.bant?.need || 0) + (parsed.bant?.timeline || 0),
+      },
+      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+    });
+  } catch (error) {
+    console.error("Qualifier agent error:", error);
+    return NextResponse.json(
+      {
+        error: "Erro interno do agente",
+        message: "Desculpe, ocorreu um erro. Tente novamente.",
+        bant: { budget: 0, authority: 0, need: 0, timeline: 0, total: 0 },
+        nextAction: "continue",
+        confidence: 0,
+        internalNote: "Erro na API",
+      },
+      { status: 500 }
+    );
+  }
+}
