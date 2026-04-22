@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { process_sdr_message } from '@/lib/ai/agent';

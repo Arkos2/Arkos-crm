@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { NextRequest, NextResponse } from "next/server";
 import { sendTextMessage } from "@/lib/whatsapp";
 import { createClient } from "@/lib/supabase/server";
