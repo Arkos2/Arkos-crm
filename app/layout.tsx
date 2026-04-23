@@ -3,6 +3,11 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/useAuth";
 import "./globals.css";
 
+// Force all pages to render dynamically (at request time, not build time)
+// This prevents Supabase from trying to connect during the Cloudflare build phase
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
   title: {
     default: "ARKOS CRM",
