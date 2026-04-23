@@ -1,12 +1,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 import { WRITER_PROMPTS } from "@/lib/ai/prompts/writer";
 import { ContentType } from "@/lib/types/agent";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 interface WriterRequest {
   contentType: ContentType;
@@ -50,15 +48,10 @@ Contexto do lead:
 
 Gere o conteúdo conforme solicitado.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    const rawText = await analyzeText(systemPrompt + "\n\n" + userMessage);
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "{}";
+    
 
     let parsed;
     try {

@@ -1,11 +1,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 import { SellerPerformance } from "@/lib/types/coach";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 const COACH_SYSTEM_PROMPT = `Você é o Agente Coach da ARKOS, especializado em desenvolvimento de vendedores B2B.
 
@@ -94,15 +92,10 @@ ${seller.improvements.join("\n")}
 
 Gere 2-4 tips altamente personalizados e acionáveis para este vendedor.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 2048,
-      system: COACH_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    const rawText = await analyzeText(COACH_SYSTEM_PROMPT + "\n\n" + userMessage);
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "[]";
+    
 
     let tips = [];
     try {

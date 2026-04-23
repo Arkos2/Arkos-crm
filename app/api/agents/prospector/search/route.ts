@@ -1,12 +1,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 import { OUTBOUND_SEARCH_PROMPT } from "@/lib/ai/prompts/prospector";
 import { OutboundSearchQuery } from "@/lib/types/prospector";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 const SIZE_LABELS: Record<string, string> = {
   micro: "Micro (1-9 funcionários)",
@@ -34,15 +32,10 @@ export async function POST(request: NextRequest) {
 Gere empresas com FIT scores variados (algumas high priority, algumas medium, algumas low) para ser realista.
 Foque em empresas do Brasil com características verossímeis.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4096,
-      system: OUTBOUND_SEARCH_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    const rawText = await analyzeText(OUTBOUND_SEARCH_PROMPT + "\n\n" + userMessage);
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "[]";
+    
 
     let prospects = [];
     try {

@@ -1,10 +1,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 const REPLY_SUGGESTION_PROMPT = `Você é um especialista em vendas consultivas B2B da ARKOS.
 
@@ -53,15 +51,10 @@ ${conversation.map((m: { senderName: string; content: string }) => `[${m.senderN
 
 Sugira a melhor resposta.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      system: REPLY_SUGGESTION_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    const rawText = await analyzeText(REPLY_SUGGESTION_PROMPT + "\n\n" + userMessage);
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "{}";
+    
 
     let parsed;
     try {

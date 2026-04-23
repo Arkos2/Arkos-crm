@@ -1,11 +1,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 import { INBOUND_ENRICHMENT_PROMPT } from "@/lib/ai/prompts/prospector";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,15 +24,10 @@ export async function POST(request: NextRequest) {
 
 Enriqueça, calcule o FIT Score e sugira a melhor abordagem.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 2048,
-      system: INBOUND_ENRICHMENT_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    const rawText = await analyzeText(INBOUND_ENRICHMENT_PROMPT + "\n\n" + userMessage);
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "{}";
+    
 
     let parsed;
     try {

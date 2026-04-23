@@ -1,13 +1,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 import { QUALIFIER_SYSTEM_PROMPT, QUALIFIER_FIRST_MESSAGE } from "@/lib/ai/prompts/qualifier";
 import { ChatMessage, BANTCollection } from "@/lib/types/agent";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 interface QualifierRequest {
   leadId: string;
@@ -110,15 +108,8 @@ export async function POST(request: NextRequest) {
 Use essas informações para personalizar a conversa.`;
     }
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: anthropicMessages,
-    });
-
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const rawText = await analyzeText(systemPrompt + "\n\n" + JSON.stringify(anthropicMessages));
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
 
     const parsed = parseClaude(rawText);
 

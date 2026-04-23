@@ -1,9 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { analyzeText } from "@/lib/gemini";
 import { supabase } from "@/lib/supabase";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+
 
 // ─── TIPOS ADAPTADOS PARA O ESQUEMA ATUAL ───
 export interface LeadContext {
@@ -121,7 +119,7 @@ export async function process_sdr_message(
       .order("created_at", { ascending: true })
       .limit(12);
 
-    const formattedHistory: Anthropic.MessageParam[] = (history || []).map((msg) => ({
+    const formattedHistory: any[] = (history || []).map((msg) => ({
       role: msg.role === "assistant" ? "assistant" : "user",
       content: msg.content,
     }));
@@ -143,17 +141,10 @@ export async function process_sdr_message(
 
 Responda à última mensagem do lead de forma natural e estratégica.`;
 
-    // 2. Chama o Claude 3.7 Sonnet
-    const response = await anthropic.messages.create({
-      model: "claude-3-7-sonnet-20250219",
-      max_tokens: 1500,
-      temperature: 0.7,
-      system: LUCAS_SYSTEM_PROMPT + "\n\n" + contextPrompt,
-      messages: formattedHistory,
-    });
-
-    const rawText = response.content[0].type === "text" ? response.content[0].text : "{}";
-
+    // 2. Chama o Gemini
+    const rawText = await analyzeText(LUCAS_SYSTEM_PROMPT + "\n\n" + contextPrompt + "\n\n" + JSON.stringify(formattedHistory));
+    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    
     // Extrair JSON
     let parsed: AgentResponse;
     try {
