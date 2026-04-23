@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { login } from "@/lib/auth/actions";
@@ -12,6 +12,14 @@ import {
 import Image from "next/image";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-arkos-bg flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-arkos-blue" /></div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/dashboard";
   const errorParam = searchParams.get("error");

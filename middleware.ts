@@ -56,8 +56,14 @@ export async function middleware(request: NextRequest) {
     request.cookies.has("sb-access-token") ||
     request.cookies.has("supabase-auth-token");
 
-  // Sem sessão → redirecionar para login
+  // Sem sessão → redirecionar para login ou 401 para API
   if (!hasSession && pathname !== "/") {
+    if (pathname.startsWith("/api/")) {
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized", message: "Sessão inválida ou expirada." }),
+        { status: 401, headers: { "content-type": "application/json" } }
+      );
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);

@@ -10,37 +10,40 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Paleta ARKOS Principal — Fiel à Logo (Navy + Gold Champagne)
+        // Paleta ARKOS Principal — Fiel à Logo (Preto + Laranja)
         arkos: {
-          bg: "#0b0e14",
-          surface: "#12151c",
-          "surface-2": "#181c26",
-          "surface-3": "#1d2233",
-          border: "#1e2a3d",
-          "border-2": "#263448",
-          // Navy (extraído da logo — arco e texto)
-          blue: "#1e3a5c",
-          "blue-light": "#2b588a",
-          "blue-dark": "#152d4a",
-          "blue-glow": "rgba(30, 58, 92, 0.35)",
-          // Gold Champagne (extraído dos ornamentos da logo)
-          gold: "#C9A84C",
-          "gold-light": "#d4b86a",
-          "gold-dark": "#a78b3a",
-          "gold-glow": "rgba(201, 168, 76, 0.3)",
-          // Aliases legados (backward compat)
-          text: "#F0F2F5",
-          muted: "#5a6a82",
-          card: "#12151c",
-          accent: "#1e3a5c",
-          "accent-light": "#2b588a",
+          bg: "#000000",
+          surface: "#0A0A0A",
+          "surface-2": "#121212",
+          "surface-3": "#1C1C1C",
+          border: "#1C1C1C",
+          "border-2": "#2A2A2A",
+          // Laranja (identidade ARKOS)
+          primary: "#FF8A3C",
+          "primary-glow": "#FF6A00",
+          "primary-dark": "#D45F16",
+          // Aliases legados (backward compat) para não quebrar o layout existente
+          blue: "#FF8A3C",
+          "blue-light": "#FF6A00",
+          "blue-dark": "#D45F16",
+          "blue-glow": "rgba(255, 106, 0, 0.35)",
+          gold: "#FF8A3C",
+          "gold-light": "#FF6A00",
+          "gold-dark": "#D45F16",
+          "gold-glow": "rgba(255, 138, 60, 0.3)",
+          text: "#FFFFFF",
+          muted: "#808080",
+          card: "#0A0A0A",
+          accent: "#FF8A3C",
+          "accent-light": "#FF6A00",
         },
         // Texto
         text: {
-          primary: "#F0F2F5",
-          secondary: "#8892a4",
-          muted: "#4a5568",
-          inverse: "#0d1016",
+          primary: "#FFFFFF",
+          secondary: "#E6E6E6",
+          muted: "#BFBFBF",
+          details: "#808080",
+          inverse: "#000000",
         },
         // Status
         success: {

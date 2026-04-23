@@ -6,6 +6,7 @@ import { Deal } from "@/lib/types/deal";
 import { cn, formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { Avatar, Badge } from "@/components/ui";
 import { BANTMeterCompact } from "./BANTMeter";
+import { motion } from "framer-motion";
 import {
   Bot,
   Calendar,
@@ -65,12 +66,17 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
     new Date(deal.expectedCloseDate) < new Date();
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
       ref={setNodeRef}
       style={style}
       className={cn(
         "group relative",
-        (isDragging || isSortableDragging) && "opacity-40"
+        (isDragging || isSortableDragging) && "opacity-40 z-50 scale-105 shadow-xl transition-transform"
       )}
     >
       <div
@@ -287,7 +293,7 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

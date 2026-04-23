@@ -9,6 +9,7 @@ import { Deal, PipelineStage } from "@/lib/types/deal";
 import { cn, formatCurrency } from "@/lib/utils";
 import { DealCard } from "./DealCard";
 import { Plus, MoreHorizontal } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 
 interface PipelineColumnProps {
   stage: PipelineStage;
@@ -104,13 +105,15 @@ export function PipelineColumn({
           items={deals.map((d) => d.id)}
           strategy={verticalListSortingStrategy}
         >
-          {deals.map((deal) => (
-            <DealCard
-              key={deal.id}
-              deal={deal}
-              onClick={onDealClick}
-            />
-          ))}
+          <AnimatePresence>
+            {deals.map((deal) => (
+              <DealCard
+                key={deal.id}
+                deal={deal}
+                onClick={onDealClick}
+              />
+            ))}
+          </AnimatePresence>
         </SortableContext>
 
         {/* Área vazia */}
