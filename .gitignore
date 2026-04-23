@@ -8,6 +8,7 @@ node_modules/
 out/
 dist/
 build/
+.open-next/
 
 # Ambiente (NUNCA commitar)
 .env

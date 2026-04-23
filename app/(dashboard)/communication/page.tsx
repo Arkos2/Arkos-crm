@@ -66,7 +66,7 @@ export default function CommunicationPage() {
         )
       );
     }
-  }, [selectedId]);
+  }, [selectedId, selectedConv]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

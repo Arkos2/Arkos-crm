@@ -1,4 +1,5 @@
-import { Metadata } from "next";
+"use client";
+
 import { useDeals } from "@/hooks/useDeals";
 import { PIPELINE_STAGES, MOCK_PIPELINE } from "@/lib/mock/deals";
 import { Button, Badge, Skeleton } from "@/components/ui";
@@ -15,9 +16,7 @@ import {
 import { formatCurrency, cn } from "@/lib/utils";
 import { Deal } from "@/lib/types/deal";
 
-export const metadata: Metadata = {
-  title: "Pipeline",
-};
+
 
 // Estatísticas do pipeline
 function getPipelineStats(deals: Deal[]) {

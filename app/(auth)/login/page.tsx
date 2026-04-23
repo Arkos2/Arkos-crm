@@ -107,8 +107,8 @@ export default function LoginPage() {
         {/* Testimonial */}
         <div className="relative p-5 rounded-2xl border border-arkos-gold/20 bg-arkos-gold/5">
           <p className="text-sm text-text-secondary italic leading-relaxed mb-3">
-            "O ARKOS CRM transformou nosso processo comercial. Fechamos 40% mais deals
-            no primeiro mês usando os agentes de IA."
+            &ldquo;O ARKOS CRM transformou nosso processo comercial. Fechamos 40% mais deals
+            no primeiro mês usando os agentes de IA.&rdquo;
           </p>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-blue flex items-center justify-center text-xs font-bold text-white">

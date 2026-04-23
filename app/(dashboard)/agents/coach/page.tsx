@@ -400,7 +400,7 @@ export default function CoachPage() {
                     Nenhum tip ativo no momento
                   </p>
                   <p className="text-xs text-text-muted mt-1">
-                    Clique em "Gerar Tips com IA" para análise atualizada
+                    Clique em &ldquo;Gerar Tips com IA&rdquo; para análise atualizada
                   </p>
                 </div>
               )}

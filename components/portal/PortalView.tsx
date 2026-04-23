@@ -388,7 +388,7 @@ export function PortalView({ project }: PortalViewProps) {
 
                         {stage.notes && (
                           <p className="text-2xs text-text-secondary italic mb-2">
-                            "{stage.notes}"
+                            &ldquo;{stage.notes}&rdquo;
                           </p>
                         )}
 
