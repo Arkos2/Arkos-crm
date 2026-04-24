@@ -6,7 +6,10 @@ const CLAUDE_MODELS = {
 };
 
 export async function callClaude(prompt: string, config?: AIConfig): Promise<AIResponse> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // No Cloudflare, as variáveis podem estar no process.env ou no contexto global
+  const apiKey = process.env.ANTHROPIC_API_KEY || 
+                 process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY ||
+                 (globalThis as any).ANTHROPIC_API_KEY;
   
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY não configurada.");

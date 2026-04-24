@@ -2,7 +2,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 function getClient(): GoogleGenerativeAI {
-  const apiKey = process.env.GEMINI_API_KEY;
+  // No Cloudflare, as variáveis podem estar no process.env ou no contexto global
+  const apiKey = process.env.GEMINI_API_KEY || 
+                 process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+                 (globalThis as any).GEMINI_API_KEY;
+
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY não configurada. Adicione a variável de ambiente no painel da Cloudflare.");
   }

@@ -60,7 +60,7 @@ export default function DashboardPage() {
             Bom dia, {user?.name ? user.name.split(" ")[0] : "Administrador"} 👋
           </h1>
           <p className="text-sm text-text-secondary mt-0.5">
-            Janeiro 2025 · Semana 3
+            {new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date()).replace(/^\w/, (c) => c.toUpperCase())} · Semana {Math.ceil(new Date().getDate() / 7)}
           </p>
         </div>
         <div className="flex items-center gap-2">
