@@ -227,7 +227,6 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-5">
-
       {/* ─── HEADER ─── */}
       <div>
         <h1 className="text-xl font-bold text-text-primary flex items-center gap-2">
