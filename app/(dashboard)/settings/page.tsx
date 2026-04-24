@@ -1035,7 +1035,8 @@ export default function SettingsPage() {
                       Dica: Descreva o tom de voz e produtos para os agentes.
                     </p>
                   </div>
-                </Card>
+                </div>
+              </Card>
 
               {/* Autonomia dos agentes */}
               <Card>
