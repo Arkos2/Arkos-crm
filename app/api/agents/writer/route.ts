@@ -1,5 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
 import { generateText } from "@/lib/ai/service";
 import { WRITER_PROMPTS } from "@/lib/ai/prompts/writer";
 import { ContentType } from "@/lib/types/agent";

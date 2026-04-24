@@ -1,5 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
 import { generateText } from "@/lib/ai/service";
 import { QUALIFIER_SYSTEM_PROMPT, QUALIFIER_FIRST_MESSAGE } from "@/lib/ai/prompts/qualifier";
 import { ChatMessage, BANTCollection } from "@/lib/types/agent";

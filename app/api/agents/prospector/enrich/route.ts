@@ -1,5 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
 import { generateText } from "@/lib/ai/service";
 import { INBOUND_ENRICHMENT_PROMPT } from "@/lib/ai/prompts/prospector";
 

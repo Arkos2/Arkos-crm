@@ -1,6 +1,8 @@
 
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 import { process_sdr_message } from '@/lib/ai/agent';
 import { 
   sendTextMessage, 
