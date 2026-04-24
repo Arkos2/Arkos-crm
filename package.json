@@ -9,9 +9,9 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "preview": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare preview",
     "deploy": "npm run build:cloudflare",
-    "build:cloudflare": "npm run build && opennextjs-cloudflare build",
+    "build:cloudflare": "npm run build && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
