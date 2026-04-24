@@ -6,6 +6,23 @@ import {
   PipelineConfig, PipelineStageConfig, CustomField, TeamRole,
 } from "@/lib/types/settings";
 
+import { useWorkflows } from "@/hooks/useWorkflows";
+import { WorkflowCard } from "@/components/settings/WorkflowCard";
+import { WorkflowEditor } from "@/components/settings/WorkflowEditor";
+import { Card, Badge, Button, Avatar, Input, ProgressBar, Skeleton } from "@/components/ui";
+import { cn, formatCurrency, formatRelativeTime } from "@/lib/utils";
+import {
+  Settings, Zap, Kanban, Users, Plug,
+  Bell, Bot, Plus, Search, Filter,
+  ToggleLeft, ToggleRight, Shield,
+  AlertCircle, CheckCircle2, Clock,
+  Trash2, Edit, Globe, Mail, MessageSquare,
+  Key, Sliders, Building2, ChevronRight,
+  ExternalLink, RefreshCw, Activity,
+  Lock,
+} from "lucide-react";
+import { toast } from "sonner";
+
 // ─── CONSTANTES DE CONFIGURAÇÃO UI (não são dados fictícios) ───
 const PIPELINE_STAGES_DEFAULT: PipelineStageConfig[] = [
   { id: "prospecting", name: "Prospecção", probability: 10, color: "slate", rottingAfterDays: 7, order: 0 },
@@ -33,22 +50,7 @@ const DEFAULT_INTEGRATIONS: Integration[] = [
   { id: "zapsign", name: "ZapSign", description: "Assinatura de contratos", logo: "✍️", category: "signature", status: "disconnected" },
   { id: "anthropic", name: "Anthropic Claude", description: "Motor de IA (Claude 3.5 Sonnet)", logo: "🧠", category: "ai", status: "disconnected" },
 ];
-import { useWorkflows } from "@/hooks/useWorkflows";
-import { WorkflowCard } from "@/components/settings/WorkflowCard";
-import { WorkflowEditor } from "@/components/settings/WorkflowEditor";
-import { Card, Badge, Button, Avatar, Input, ProgressBar, Skeleton } from "@/components/ui";
-import { cn, formatCurrency, formatRelativeTime } from "@/lib/utils";
-import {
-  Settings, Zap, Kanban, Users, Plug,
-  Bell, Bot, Plus, Search, Filter,
-  ToggleLeft, ToggleRight, Shield,
-  AlertCircle, CheckCircle2, Clock,
-  Trash2, Edit, Globe, Mail, MessageSquare,
-  Key, Sliders, Building2, ChevronRight,
-  ExternalLink, RefreshCw, Activity,
-  Lock,
-} from "lucide-react";
-import { toast } from "sonner";
+
 
 type SettingsTab =
   | "general"
