@@ -3,7 +3,7 @@ import { generateText } from "@/lib/ai/service";
 import { OUTBOUND_SEARCH_PROMPT } from "@/lib/ai/prompts/prospector";
 import { OutboundSearchQuery } from "@/lib/types/prospector";
 
-export const runtime = "edge";
+
 
 
 
