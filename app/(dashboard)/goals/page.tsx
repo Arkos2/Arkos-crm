@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { GamificationProfile, Badge, Goal, BadgeRarity } from "@/lib/types/goals";
-import { MOCK_GAMIFICATION } from "@/lib/mock/goals";
 import { Card, Badge as UIBadge, Button, Avatar, ProgressBar } from "@/components/ui";
 import { cn, formatCurrency, formatRelativeTime } from "@/lib/utils";
 import {
@@ -320,21 +319,31 @@ function LeaderboardRow({
 
 // ─── PÁGINA PRINCIPAL ───
 export default function GoalsPage() {
-  const [profiles] = useState<GamificationProfile[]>(MOCK_GAMIFICATION);
+  const [profiles] = useState<GamificationProfile[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("u-002");
   const [activeTab, setActiveTab] = useState<
     "ranking" | "my-goals" | "badges" | "history"
   >("ranking");
   const [confettiLoaded, setConfettiLoaded] = useState(false);
 
-  const selectedProfile = profiles.find((p) => p.userId === selectedUserId)!;
-  const unlockedBadges = selectedProfile.badges.filter((b) => b.isUnlocked);
-  const lockedBadges = selectedProfile.badges.filter((b) => !b.isUnlocked);
-
   // Carregar confetti
   useEffect(() => {
     import("canvas-confetti").then(() => setConfettiLoaded(true));
   }, []);
+
+  if (profiles.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Trophy className="h-12 w-12 text-text-muted opacity-20" />
+        <h2 className="text-lg font-bold text-text-primary">Ranking Vazio</h2>
+        <p className="text-sm text-text-muted">Ainda não há dados de performance para exibir.</p>
+      </div>
+    );
+  }
+
+  const selectedProfile = profiles.find((p) => p.userId === selectedUserId) || profiles[0];
+  const unlockedBadges = selectedProfile.badges.filter((b) => b.isUnlocked);
+  const lockedBadges = selectedProfile.badges.filter((b) => !b.isUnlocked);
 
   const triggerConfetti = async () => {
     if (!confettiLoaded) return;

@@ -4,6 +4,7 @@ export interface UserProfile {
   id: string;
   email: string;
   fullName: string;
+  name?: string; // Alias for compatibility with legacy AuthContext
   firstName: string;
   lastName: string;
   avatarUrl?: string;
@@ -17,6 +18,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface AuthState {
   user: UserProfile | null;

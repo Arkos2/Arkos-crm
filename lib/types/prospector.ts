@@ -166,10 +166,12 @@ export interface OutboundSearchQuery {
   industries: string[];
   sizes: CompanySize[];
   roles: string[];
-  location?: string;
+  locations: string[];
   painPoints?: string[];
   keywords?: string[];
   limit?: number;
+  nicheDescription?: string;
+  icpDetails?: string;
 }
 
 // ─── ESTATÍSTicas DO PROSPECTOR ───

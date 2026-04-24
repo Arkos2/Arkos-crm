@@ -158,6 +158,27 @@ CREATE TABLE IF NOT EXISTS public.user_points (
 -- APLICANDO O RLS AGORA QUE A TABELA EXISTE
 -- ==========================================
 
+-- ─── ORGANIZATIONS RLS ───
+ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Qualquer usuário logado pode visualizar organizações" ON public.organizations;
+CREATE POLICY "Qualquer usuário logado pode visualizar organizações" ON public.organizations
+    FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Qualquer usuário logado pode criar organizações" ON public.organizations;
+CREATE POLICY "Qualquer usuário logado pode criar organizações" ON public.organizations
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- ─── CONTACTS RLS ───
+ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Qualquer usuário logado pode visualizar contatos" ON public.contacts;
+CREATE POLICY "Qualquer usuário logado pode visualizar contatos" ON public.contacts
+    FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Qualquer usuário logado pode criar contatos" ON public.contacts;
+CREATE POLICY "Qualquer usuário logado pode criar contatos" ON public.contacts
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- ─── DEALS RLS ───
 ALTER TABLE public.deals ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Visualizar próprios negócios" ON public.deals;

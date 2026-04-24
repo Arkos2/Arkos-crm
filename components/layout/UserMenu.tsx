@@ -9,12 +9,16 @@ import {
   Bell, Shield, HelpCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { logout } from "@/lib/auth/actions";
 
 export function UserMenu() {
-  const { user, signOut } = useAuth();
+  const { user, supabaseUser, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!user) return null;
+  if (!supabaseUser) return null;
+
+  const displayName = user?.fullName || supabaseUser.email?.split("@")[0] || "Usuário";
+  const displayEmail = user?.email || supabaseUser.email;
 
   return (
     <div className="relative">
@@ -25,13 +29,13 @@ export function UserMenu() {
           isOpen ? "bg-arkos-surface-2" : "hover:bg-arkos-surface-2"
         )}
       >
-        <Avatar name={user.fullName} size="sm" status="online" />
+        <Avatar name={displayName} size="sm" status="online" />
         <div className="hidden sm:block text-left">
           <p className="text-xs font-semibold text-text-primary leading-none">
-            {user.firstName}
+            {user?.firstName || displayName}
           </p>
           <p className="text-2xs text-text-muted leading-none mt-0.5 capitalize">
-            {user.role}
+            {user?.role || "Membro"}
           </p>
         </div>
         <ChevronDown className={cn(
@@ -47,9 +51,9 @@ export function UserMenu() {
 
             {/* User info */}
             <div className="px-4 py-3 border-b border-arkos-border">
-              <p className="text-sm font-bold text-text-primary">{user.fullName}</p>
-              <p className="text-xs text-text-muted">{user.email}</p>
-              {user.companyName && (
+              <p className="text-sm font-bold text-text-primary">{displayName}</p>
+              <p className="text-xs text-text-muted">{displayEmail}</p>
+              {user?.companyName && (
                 <p className="text-2xs text-text-muted mt-0.5">{user.companyName}</p>
               )}
             </div>
@@ -74,9 +78,9 @@ export function UserMenu() {
             {/* Logout */}
             <div className="border-t border-arkos-border py-1">
               <button
-                onClick={() => {
+                onClick={async () => {
                   setIsOpen(false);
-                  signOut();
+                  await logout();
                 }}
                 className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-danger hover:bg-danger/10 transition-colors"
               >

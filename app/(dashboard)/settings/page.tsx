@@ -3,13 +3,36 @@
 import { useState } from "react";
 import {
   Workflow, TeamMember, Integration,
-  PipelineConfig, CustomField, TeamRole,
+  PipelineConfig, PipelineStageConfig, CustomField, TeamRole,
 } from "@/lib/types/settings";
-import {
-  MOCK_PIPELINES, MOCK_CUSTOM_FIELDS,
-  MOCK_TEAM, MOCK_INTEGRATIONS, MOCK_GENERAL_SETTINGS,
-  MOCK_NOTIFICATION_SETTINGS, MOCK_AI_SETTINGS,
-} from "@/lib/mock/settings";
+
+// ─── CONSTANTES DE CONFIGURAÇÃO UI (não são dados fictícios) ───
+const PIPELINE_STAGES_DEFAULT: PipelineStageConfig[] = [
+  { id: "prospecting", name: "Prospecção", probability: 10, color: "slate", rottingAfterDays: 7, order: 0 },
+  { id: "qualification", name: "Qualificação", probability: 25, color: "blue", rottingAfterDays: 5, order: 1 },
+  { id: "proposal", name: "Proposta", probability: 60, color: "amber", rottingAfterDays: 4, order: 2 },
+  { id: "closing", name: "Fechamento", probability: 95, color: "green", rottingAfterDays: 2, order: 5 },
+];
+
+const DEFAULT_PIPELINES: PipelineConfig[] = [
+  {
+    id: "default",
+    name: "Funil de Vendas",
+    description: "Pipeline padrão",
+    isDefault: true,
+    currency: "BRL",
+    dealRotting: true,
+    stages: PIPELINE_STAGES_DEFAULT,
+    createdAt: new Date().toISOString(),
+  }
+];
+
+const DEFAULT_INTEGRATIONS: Integration[] = [
+  { id: "whatsapp", name: "WhatsApp Business", description: "Integração oficial via API", logo: "💬", category: "communication", status: "disconnected" },
+  { id: "gmail", name: "Gmail / Google Workspace", description: "Sincronização de e-mails", logo: "📧", category: "communication", status: "disconnected" },
+  { id: "zapsign", name: "ZapSign", description: "Assinatura de contratos", logo: "✍️", category: "signature", status: "disconnected" },
+  { id: "anthropic", name: "Anthropic Claude", description: "Motor de IA (Claude 3.5 Sonnet)", logo: "🧠", category: "ai", status: "disconnected" },
+];
 import { useWorkflows } from "@/hooks/useWorkflows";
 import { WorkflowCard } from "@/components/settings/WorkflowCard";
 import { WorkflowEditor } from "@/components/settings/WorkflowEditor";
@@ -100,9 +123,37 @@ export default function SettingsPage() {
   const [workflowSearch, setWorkflowSearch] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
   const [integrationFilter, setIntegrationFilter] = useState<"all" | "connected" | "disconnected">("all");
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATION_SETTINGS);
-  const [aiSettings, setAiSettings] = useState(MOCK_AI_SETTINGS);
-  const [generalSettings, setGeneralSettings] = useState(MOCK_GENERAL_SETTINGS);
+  const [notifications, setNotifications] = useState({
+    emailNotifications: true,
+    pushNotifications: true,
+    whatsappNotifications: false,
+    events: {
+      dealStageChanged: true, newLeadAssigned: true, proposalViewed: true,
+      proposalSigned: true, taskOverdue: true, dealRotting: true,
+      goalAchieved: true, aiInsight: false, teamMention: true,
+    },
+    digestFrequency: "realtime" as const,
+  });
+  const [aiSettings, setAiSettings] = useState({
+    model: "claude-3-5-sonnet-20241022",
+    temperature: 0.7,
+    maxTokens: 2048,
+    language: "pt-BR",
+    tone: "professional",
+    companyContext: "",
+    agentAutonomy: { qualifier: "suggest", writer: "suggest", followup: "suggest", prospector: "suggest", analyst: "suggest", coach: "suggest" },
+    monthlyTokenBudget: 0,
+    tokensUsedThisMonth: 0,
+  });
+  const [generalSettings, setGeneralSettings] = useState({
+    companyName: "",
+    companyWebsite: "",
+    timezone: "America/Sao_Paulo",
+    currency: "BRL",
+    dateFormat: "DD/MM/YYYY",
+    language: "pt-BR",
+    fiscalYearStart: "01/01",
+  });
 
   // ─── WORKFLOW ACTIONS ───
   const handleToggleWorkflow = async (id: string) => {
@@ -134,13 +185,13 @@ export default function SettingsPage() {
   const totalExecutions = workflows.reduce((s, w) => s + w.executionCount, 0);
   const tokensPercent = Math.round((aiSettings.tokensUsedThisMonth / aiSettings.monthlyTokenBudget) * 100);
 
-  const filteredIntegrations = MOCK_INTEGRATIONS.filter(i => {
+  const filteredIntegrations = DEFAULT_INTEGRATIONS.filter(i => {
     if (integrationFilter === "connected") return i.status === "connected";
     if (integrationFilter === "disconnected") return i.status === "disconnected";
     return true;
   });
 
-  const connectedCount = MOCK_INTEGRATIONS.filter(i => i.status === "connected").length;
+  const connectedCount = DEFAULT_INTEGRATIONS.filter(i => i.status === "connected").length;
 
   return (
     <div className="space-y-5">
@@ -350,7 +401,7 @@ export default function SettingsPage() {
           ══════════════════════════════════ */}
           {activeTab === "pipelines" && (
             <div className="space-y-4">
-              {MOCK_PIPELINES.map(pipeline => (
+              {DEFAULT_PIPELINES.map(pipeline => (
                 <Card key={pipeline.id}>
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -430,7 +481,7 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-text-secondary">
-                  {MOCK_CUSTOM_FIELDS.length} campos configurados
+                  {[].length} campos configurados
                 </p>
                 <Button variant="gold" size="sm" icon={<Plus className="h-3.5 w-3.5" />}>
                   Novo Campo
@@ -438,7 +489,7 @@ export default function SettingsPage() {
               </div>
 
               {["deal", "contact", "organization"].map(entity => {
-                const fields = MOCK_CUSTOM_FIELDS.filter(f => f.entity === entity);
+                const fields = ([] as CustomField[]).filter(f => f.entity === entity);
                 if (fields.length === 0) return null;
                 const entityLabels: Record<string, string> = {
                   deal: "Negócios 📋",
@@ -506,7 +557,7 @@ export default function SettingsPage() {
 
               <Card>
                 <div className="space-y-2">
-                  {MOCK_TEAM.filter(m =>
+                  {([] as TeamMember[]).filter(m =>
                     !teamSearch || m.name.toLowerCase().includes(teamSearch.toLowerCase()) ||
                     m.email.toLowerCase().includes(teamSearch.toLowerCase())
                   ).map(member => {
@@ -614,7 +665,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-text-secondary">
-                    <strong className="text-text-primary">{connectedCount}</strong>/{MOCK_INTEGRATIONS.length} conectadas
+                    <strong className="text-text-primary">{connectedCount}</strong>/{DEFAULT_INTEGRATIONS.length} conectadas
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

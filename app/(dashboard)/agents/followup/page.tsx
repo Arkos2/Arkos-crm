@@ -4,11 +4,6 @@ import { useState } from "react";
 import { Sequence, Enrollment } from "@/lib/types/followup";
 import { SequenceCard } from "@/components/followup/SequenceCard";
 import { EnrollmentTimeline } from "@/components/followup/EnrollmentTimeline";
-import {
-  MOCK_SEQUENCES,
-  MOCK_ENROLLMENTS,
-  MOCK_FOLLOWUP_STATS,
-} from "@/lib/mock/followup";
 import { Card, Badge, Button, KPICard, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -23,13 +18,17 @@ type ActiveTab = "sequences" | "enrollments";
 
 export default function FollowUpPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("sequences");
-  const [sequences, setSequences] = useState<Sequence[]>(MOCK_SEQUENCES);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>(MOCK_ENROLLMENTS);
+  const [sequences, setSequences] = useState<Sequence[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [enrollmentFilter, setEnrollmentFilter] = useState<
     "all" | "active" | "replied" | "completed"
   >("all");
 
-  const stats = MOCK_FOLLOWUP_STATS;
+  const stats = {
+    activeSequences: 0, totalEnrollments: 0, responseRate: 0,
+    meetingsBooked: 0, conversionTrend: 0,
+    activeEnrollments: 0, avgReplyRate: 0, stepsSentToday: 0, repliesReceivedToday: 0,
+  };
 
   const handleToggleSequence = (id: string) => {
     setSequences((prev) =>
@@ -131,7 +130,7 @@ export default function FollowUpPage() {
           value={stats.activeSequences}
           valueFormat="number"
           icon={<Zap className="h-4 w-4" />}
-          description="de 3 criadas"
+          description={`de ${sequences.length} criada${sequences.length !== 1 ? "s" : ""}`}
         />
         <KPICard
           title="Em Andamento"

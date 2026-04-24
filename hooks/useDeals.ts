@@ -22,9 +22,9 @@ export function useDeals(filters?: {
     key,
     () => getDeals(filters),
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 5000,
+      dedupingInterval: 10000,
     }
   );
 

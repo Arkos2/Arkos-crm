@@ -306,7 +306,7 @@ export function subscribeToDeals(
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "deals" },
-      (payload) => {
+      (payload: any) => {
         callback(
           payload.new as DealRow,
           payload.eventType as "INSERT" | "UPDATE" | "DELETE"

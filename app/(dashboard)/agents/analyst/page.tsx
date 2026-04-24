@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/lib/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { InsightCard } from "@/components/agents/InsightCard";
-import { MOCK_INSIGHTS, MOCK_PIPELINE_DATA } from "@/lib/mock/analytics";
 import { AnalystInsight, InsightLevel } from "@/lib/types/agent";
 import { Card, Badge, Button, KPICard, ProgressBar } from "@/components/ui";
 import { cn, formatCurrency, formatPercent } from "@/lib/utils";
@@ -50,10 +49,20 @@ function CustomTooltip({ active, payload, label }: {
 
 export default function AnalystPage() {
   const { user } = useAuth();
-  const [insights, setInsights] = useState<AnalystInsight[]>(MOCK_INSIGHTS);
+  const [insights, setInsights] = useState<AnalystInsight[]>([]);
   const [activeFilter, setActiveFilter] = useState<InsightLevel | "all">("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"insights" | "funnel" | "revenue" | "team" | "economics">("insights");
+
+  const PIPELINE_DATA_DEFAULT = {
+    totalValue: 0, weightedValue: 0, dealCount: 0, activeDeals: 0,
+    wonThisMonth: 0, lostThisMonth: 0, avgCycleLength: 0, conversionRate: 0,
+    stages: [] as Array<{ name: string; count: number; value: number; conversion: number | null }>,
+    lossReasons: [] as Array<{ reason: string; count: number; percentage: number }>,
+    teamPerformance: [] as Array<{ name: string; revenue: number; target: number; deals: number; winRate: number }>,
+    revenueHistory: [] as Array<{ month: string; realized: number; target: number }>,
+    unitEconomics: { cac: 0, ltv: 0, ltvCacRatio: 0, paybackMonths: 0, churnRate: 0, mrr: 0, arr: 0 },
+  };
 
   const filteredInsights =
     activeFilter === "all"
@@ -68,7 +77,7 @@ export default function AnalystPage() {
       const res = await fetch("/api/agents/analyst", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pipelineData: MOCK_PIPELINE_DATA }),
+        body: JSON.stringify({ pipelineData: PIPELINE_DATA_DEFAULT }),
       });
 
       if (!res.ok) throw new Error();
@@ -90,7 +99,7 @@ export default function AnalystPage() {
     toast.info("Insight dispensado");
   };
 
-  const data = MOCK_PIPELINE_DATA;
+  const data = PIPELINE_DATA_DEFAULT;
 
   return (
     <div className="space-y-5">
@@ -337,9 +346,7 @@ export default function AnalystPage() {
               <p className="text-xs text-text-secondary flex items-start gap-2">
                 <Bot className="h-3.5 w-3.5 text-arkos-gold shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-text-primary">IA:</strong> O gargalo em
-                  Proposta (53%) está abaixo da média histórica (68%). Cada 1% de
-                  melhoria aqui representa ~R$8.500 de receita adicional.
+                  <strong className="text-text-primary">IA:</strong> Aguardando dados reais para identificar gargalos no funil.
                 </span>
               </p>
             </div>
@@ -378,9 +385,7 @@ export default function AnalystPage() {
               <p className="text-xs text-text-secondary flex items-start gap-2">
                 <Bot className="h-3.5 w-3.5 text-arkos-gold shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-text-primary">IA:</strong> 35% cita preço.
-                  Leads que recebem análise de ROI personalizada convertem 52% mais.
-                  Ative o Agente Redator para gerar ROI automático.
+                  <strong className="text-text-primary">IA:</strong> Analisando motivos de perda conforme novos dados forem registrados.
                 </span>
               </p>
             </div>
@@ -515,9 +520,7 @@ export default function AnalystPage() {
               <p className="text-xs text-text-secondary flex items-start gap-2">
                 <Bot className="h-3.5 w-3.5 text-arkos-gold shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-text-primary">Coach IA:</strong> {user?.name ? user.name.split(" ")[0] : "Administrador"}
-                  usa demo na 1ª reunião e fecha 2x mais. Recomendo treinar Pedro
-                  e Ana nessa abordagem. Impacto estimado: +R$40k/mês.
+                  <strong className="text-text-primary">Coach IA:</strong> Acompanhando performance da equipe em tempo real.
                 </span>
               </p>
             </div>
@@ -669,9 +672,7 @@ export default function AnalystPage() {
                 <p className="text-xs text-text-secondary flex items-start gap-2">
                   <Bot className="h-3.5 w-3.5 text-arkos-gold shrink-0 mt-0.5" />
                   <span>
-                    <strong className="text-text-primary">IA:</strong> LTV/CAC de
-                    8x está excelente (benchmark B2B: 3x). Se mantiver crescimento
-                    atual, ARR atingirá R$2M em 8 meses.
+                    <strong className="text-text-primary">IA:</strong> Monitorando métricas de LTV/CAC e saúde financeira do pipeline.
                   </span>
                 </p>
               </div>

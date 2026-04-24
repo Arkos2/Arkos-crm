@@ -13,7 +13,7 @@ export async function getUserGoals(userId: string) {
 
   if (error) throw error;
 
-  return (data || []).map((row) => ({
+  const mappedData = data?.map((row: any) => ({
     id: row.id,
     userId: row.user_id,
     type: row.type,

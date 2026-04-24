@@ -13,9 +13,8 @@ import { ProspectCard } from "./ProspectCard";
 import { toast } from "sonner";
 
 const INDUSTRIES = [
-  "Saúde", "Logística", "Educação", "Financeiro",
-  "Varejo", "Indústria", "Tecnologia", "Agronegócio",
-  "Construção Civil", "Serviços", "Alimentação",
+  "Odontologia Premium", "Cirurgia Plástica", "Capilar", "Estética Avançada",
+  "Saúde", "Tecnologia", "Serviços",
 ];
 
 const SIZES: Array<{ id: CompanySize; label: string; desc: string }> = [
@@ -44,17 +43,27 @@ interface OutboundSearchProps {
 }
 
 export function OutboundSearch({ onConvert }: OutboundSearchProps) {
+  const [activeTab, setActiveTab] = useState<"basic" | "niche" | "history">("basic");
   const [query, setQuery] = useState<OutboundSearchQuery>({
-    industries: ["Saúde", "Logística"],
+    industries: ["Odontologia Premium"],
     sizes: ["small", "medium"],
-    roles: ["CEO", "Diretor Financeiro", "COO"],
-    location: "São Paulo",
-    painPoints: ["processos manuais", "falta de integração"],
+    roles: ["CEO", "Diretor"],
+    locations: ["São Paulo"],
+    painPoints: ["processos manuais"],
     keywords: [],
     limit: 8,
+    nicheDescription: "",
+    icpDetails: "",
   });
 
   const [results, setResults] = useState<Prospect[]>([]);
+  const [history, setHistory] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("arkos_prospector_history");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -89,9 +98,22 @@ export function OutboundSearch({ onConvert }: OutboundSearchProps) {
       if (!res.ok) throw new Error();
 
       const data = await res.json();
-      setResults(data.prospects || []);
+      const newResults = data.prospects || [];
+      setResults(newResults);
+      
+      // Salvar no histórico
+      const newHistoryItem = {
+        id: Date.now().toString(),
+        query: { ...query },
+        results: newResults,
+        timestamp: new Date().toISOString(),
+      };
+      const updatedHistory = [newHistoryItem, ...history].slice(0, 10);
+      setHistory(updatedHistory);
+      localStorage.setItem("arkos_prospector_history", JSON.stringify(updatedHistory));
+
       toast.success(
-        `${data.prospects?.length || 0} empresas encontradas com IA!`,
+        `${newResults.length} empresas encontradas com IA!`,
         {
           description: `Tokens usados: ${data.tokensUsed || 0}`,
         }
@@ -103,276 +125,256 @@ export function OutboundSearch({ onConvert }: OutboundSearchProps) {
     }
   };
 
+  const applyNichePreset = (niche: string, icp: string) => {
+    setQuery(p => ({
+      ...p,
+      nicheDescription: niche,
+      icpDetails: icp,
+      industries: [niche.includes("Odontologia") ? "Odontologia Premium" : "Cirurgia Plástica"],
+    }));
+    setActiveTab("niche");
+    toast.info("Preset aplicado: " + niche);
+  };
+
+  const handleLocalConvert = async (prospect: Prospect) => {
+    if (!onConvert) return;
+    
+    // Chamar a funo real (que salva no banco)
+    await (onConvert(prospect) as any);
+    
+    // Atualizar o estado local para desativar o boto no card
+    setResults(prev => prev.map(p => 
+      p.id === prospect.id ? { ...p, status: "converted" } : p
+    ));
+  };
+
   const highPriority = results.filter(
     (p) => p.fitScore?.recommendation === "high_priority"
   ).length;
 
   return (
     <div className="space-y-5">
+      
+      {/* ─── ABAS DE NAVEGAÇÃO ─── */}
+      <div className="flex p-1 bg-arkos-bg-secondary/50 rounded-2xl border border-arkos-border w-fit">
+        <button
+          onClick={() => setActiveTab("basic")}
+          className={cn(
+            "px-4 py-2 rounded-xl text-xs font-semibold transition-all",
+            activeTab === "basic" ? "bg-arkos-blue text-white shadow-lg" : "text-text-muted hover:text-text-secondary"
+          )}
+        >
+          Busca Rápida
+        </button>
+        <button
+          onClick={() => setActiveTab("niche")}
+          className={cn(
+            "px-4 py-2 rounded-xl text-xs font-semibold transition-all",
+            activeTab === "niche" ? "bg-arkos-gold text-white shadow-lg" : "text-text-muted hover:text-text-secondary"
+          )}
+        >
+          Nicho & ICP
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={cn(
+            "px-4 py-2 rounded-xl text-xs font-semibold transition-all",
+            activeTab === "history" ? "bg-white/10 text-white" : "text-text-muted hover:text-text-secondary"
+          )}
+        >
+          Histórico Outbound
+        </button>
+      </div>
 
-      {/* ─── CONFIGURAÇÃO DA BUSCA ─── */}
       <Card>
-        <div className="space-y-5">
-
-          {/* Setores */}
-          <div>
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2.5 block">
-              Setores Alvo *
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {INDUSTRIES.map((ind) => {
-                const selected = query.industries.includes(ind);
-                return (
-                  <button
-                    key={ind}
-                    onClick={() =>
-                      toggleItem(query.industries, ind, (v) =>
-                        setQuery((p) => ({ ...p, industries: v }))
-                      )
-                    }
-                    className={cn(
-                      "px-3 py-1.5 rounded-xl border text-xs font-medium transition-all",
-                      selected
-                        ? "bg-arkos-blue/10 border-arkos-blue/40 text-arkos-blue-light"
-                        : "border-arkos-border text-text-muted hover:border-arkos-blue/30 hover:text-text-secondary"
-                    )}
-                  >
-                    {selected && "✓ "}{ind}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tamanhos */}
-          <div>
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2.5 block">
-              Porte da Empresa *
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {SIZES.map((size) => {
-                const selected = query.sizes.includes(size.id);
-                return (
-                  <button
-                    key={size.id}
-                    onClick={() =>
-                      toggleItem(query.sizes, size.id, (v) =>
-                        setQuery((p) => ({ ...p, sizes: v }))
-                      )
-                    }
-                    className={cn(
-                      "flex flex-col items-center px-4 py-2 rounded-xl border transition-all",
-                      selected
-                        ? "bg-arkos-gold/10 border-arkos-gold/40 text-arkos-gold"
-                        : "border-arkos-border text-text-muted hover:border-arkos-gold/20"
-                    )}
-                  >
-                    <span className="text-xs font-semibold">{size.label}</span>
-                    <span className="text-2xs opacity-60">{size.desc}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Cargos e Localização */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2.5 block">
-                Cargos Alvo *
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {ROLES.map((role) => {
-                  const selected = query.roles.includes(role);
-                  return (
-                    <button
-                      key={role}
-                      onClick={() =>
-                        toggleItem(query.roles, role, (v) =>
-                          setQuery((p) => ({ ...p, roles: v }))
-                        )
-                      }
-                      className={cn(
-                        "px-2.5 py-1 rounded-lg border text-2xs font-medium transition-all",
-                        selected
-                          ? "bg-success/10 border-success/30 text-success"
-                          : "border-arkos-border text-text-muted hover:border-success/20"
-                      )}
-                    >
-                      {selected && "✓ "}{role}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3">
+        <div className="space-y-6">
+          
+          {activeTab === "basic" && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              {/* Setores */}
               <div>
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2.5 block">
-                  Localização
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 block">
+                  Setores Alvo *
                 </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {LOCATIONS.map((loc) => (
-                    <button
-                      key={loc}
-                      onClick={() => setQuery((p) => ({ ...p, location: loc }))}
-                      className={cn(
-                        "px-2.5 py-1 rounded-lg border text-2xs font-medium transition-all",
-                        query.location === loc
-                          ? "bg-arkos-blue/10 border-arkos-blue/40 text-arkos-blue-light"
-                          : "border-arkos-border text-text-muted hover:border-arkos-blue/20"
-                      )}
-                    >
-                      {loc}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {INDUSTRIES.map((ind) => {
+                    const selected = query.industries.includes(ind);
+                    return (
+                      <button
+                        key={ind}
+                        onClick={() => toggleItem(query.industries, ind, (v) => setQuery((p) => ({ ...p, industries: v })))}
+                        className={cn(
+                          "px-3 py-2 rounded-xl border text-xs font-medium transition-all",
+                          selected
+                            ? "bg-arkos-blue/10 border-arkos-blue/40 text-arkos-blue-light"
+                            : "border-arkos-border text-text-muted hover:border-arkos-blue/30"
+                        )}
+                      >
+                        {selected && "✓ "}{ind}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Qtd de resultados */}
+              {/* Localização Multi-Seleção */}
               <div>
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2 block">
-                  Quantidade: {query.limit} empresas
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 block">
+                  Regiões de Atuação (Multi-seleção)
                 </label>
-                <input
-                  type="range"
-                  min={4}
-                  max={20}
-                  step={2}
-                  value={query.limit}
-                  onChange={(e) =>
-                    setQuery((p) => ({ ...p, limit: Number(e.target.value) }))
-                  }
-                  className="w-full accent-arkos-blue"
-                />
-                <div className="flex justify-between text-2xs text-text-muted mt-1">
-                  <span>4</span>
-                  <span>20</span>
+                <div className="flex flex-wrap gap-2">
+                  {LOCATIONS.map((loc) => {
+                    const selected = query.locations.includes(loc);
+                    return (
+                      <button
+                        key={loc}
+                        onClick={() => toggleItem(query.locations, loc, (v) => setQuery((p) => ({ ...p, locations: v })))}
+                        className={cn(
+                          "px-3 py-2 rounded-xl border text-xs font-medium transition-all",
+                          selected
+                            ? "bg-success/10 border-success/40 text-success"
+                            : "border-arkos-border text-text-muted hover:border-success/30"
+                        )}
+                      >
+                        {selected && "📍 "}{loc}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Presets Rápidos */}
+              <div>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 block">
+                  Sugestões de Nicho
+                </label>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => applyNichePreset("Odontologia Premium", "Clínicas focadas em Reabilitação Estética e Funcional (Lentes de Porcelana, Implante Protocolo, Invisalign) com alto ticket médio.")}
+                  >
+                    🦷 Odonto Premium
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={() => applyNichePreset("Cirurgia Plástica", "Clínicas focadas em procedimentos de alto ticket como Lipo HD, Mastopexia e Facelift com ciclo de decisão de 45 a 90 dias.")}
+                  >
+                    🏥 Cirurgia Plástica
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Avançado */}
-          <div>
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
-            >
-              <Sliders className="h-3.5 w-3.5" />
-              Filtros avançados
-              {showAdvanced ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
-            </button>
-
-            {showAdvanced && (
-              <div className="mt-3 pt-3 border-t border-arkos-border grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Dores */}
-                <div>
-                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2 block">
-                    Dores / Keywords de Problema
+          {activeTab === "niche" && (
+            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <label className="text-xs font-semibold text-arkos-gold uppercase tracking-wide block">
+                    Descrição Detalhada do Nicho
                   </label>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {(query.painPoints || []).map((pain) => (
-                      <span
-                        key={pain}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-danger/10 border border-danger/20 text-2xs text-danger"
-                      >
-                        {pain}
-                        <button
-                          onClick={() =>
-                            setQuery((p) => ({
-                              ...p,
-                              painPoints: p.painPoints?.filter((x) => x !== pain),
-                            }))
-                          }
-                          className="hover:text-danger/70"
-                        >
-                          <X className="h-2.5 w-2.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      value={newPain}
-                      onChange={(e) => setNewPain(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newPain.trim()) {
-                          setQuery((p) => ({
-                            ...p,
-                            painPoints: [...(p.painPoints || []), newPain.trim()],
-                          }));
-                          setNewPain("");
-                        }
-                      }}
-                      placeholder="planilhas manuais... Enter"
-                      className="flex-1 h-8 px-3 rounded-lg text-xs bg-arkos-bg border border-arkos-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-arkos-blue transition-all"
-                    />
-                  </div>
+                  <textarea
+                    value={query.nicheDescription}
+                    onChange={(e) => setQuery(p => ({ ...p, nicheDescription: e.target.value }))}
+                    placeholder="Ex: Clínicas de Cirurgia Plástica focadas em Lipo HD e implantes mamários..."
+                    className="w-full h-32 p-4 rounded-2xl bg-arkos-bg border border-arkos-border text-sm text-text-primary focus:outline-none focus:border-arkos-gold transition-all resize-none"
+                  />
                 </div>
-
-                {/* Keywords adicionais */}
-                <div>
-                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2 block">
-                    Keywords Adicionais
+                <div className="space-y-3">
+                  <label className="text-xs font-semibold text-arkos-gold uppercase tracking-wide block">
+                    Perfil do Cliente Ideal (ICP) & Faturamento
                   </label>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {(query.keywords || []).map((kw) => (
-                      <span
-                        key={kw}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-info/10 border border-info/20 text-2xs text-info"
-                      >
-                        {kw}
-                        <button
-                          onClick={() =>
-                            setQuery((p) => ({
-                              ...p,
-                              keywords: p.keywords?.filter((x) => x !== kw),
-                            }))
-                          }
-                        >
-                          <X className="h-2.5 w-2.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <input
-                    value={newKeyword}
-                    onChange={(e) => setNewKeyword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && newKeyword.trim()) {
-                        setQuery((p) => ({
-                          ...p,
-                          keywords: [...(p.keywords || []), newKeyword.trim()],
-                        }));
-                        setNewKeyword("");
-                      }
-                    }}
-                    placeholder="crescimento, contratando... Enter"
-                    className="w-full h-8 px-3 rounded-lg text-xs bg-arkos-bg border border-arkos-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-arkos-blue transition-all"
+                  <textarea
+                    value={query.icpDetails}
+                    onChange={(e) => setQuery(p => ({ ...p, icpDetails: e.target.value }))}
+                    placeholder="Ex: Faturamento mensal entre 200k e 1M, equipe de 10-20 pessoas, usa software X..."
+                    className="w-full h-32 p-4 rounded-2xl bg-arkos-bg border border-arkos-border text-sm text-text-primary focus:outline-none focus:border-arkos-gold transition-all resize-none"
                   />
                 </div>
               </div>
-            )}
-          </div>
+              <div className="p-4 bg-arkos-gold/5 border border-arkos-gold/20 rounded-2xl">
+                <p className="text-xs text-arkos-gold-light">
+                  💡 <strong>Dica do Agente:</strong> Quanto mais específico você for no faturamento e na especialidade, mais precisos serão os leads encontrados pela IA.
+                </p>
+              </div>
+            </div>
+          )}
 
-          {/* Botão buscar */}
-          <Button
-            variant="gold"
-            size="lg"
-            fullWidth
-            loading={isSearching}
-            onClick={handleSearch}
-            icon={<Search className="h-4 w-4" />}
-          >
-            {isSearching
-              ? `Prospectando com IA... (${query.limit} empresas)`
-              : `Buscar ${query.limit} Empresas com IA`}
-          </Button>
+          {activeTab === "history" && (
+            <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
+              {history.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-arkos-border rounded-3xl">
+                  <RefreshCw className="h-10 w-10 text-text-muted mx-auto mb-3 opacity-20" />
+                  <p className="text-sm text-text-secondary">Nenhuma busca salva ainda</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wide block mb-2">
+                    Últimas 10 Buscas Realizadas
+                  </label>
+                  {history.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setQuery(item.query);
+                        setResults(item.results);
+                        setHasSearched(true);
+                        setActiveTab("basic");
+                        toast.success("Busca restaurada do histórico!");
+                      }}
+                      className="w-full flex items-center justify-between p-4 rounded-2xl bg-arkos-bg-secondary hover:bg-arkos-bg-tertiary border border-arkos-border transition-all text-left group"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-text-primary">
+                            {item.query.industries.join(", ")}
+                          </span>
+                          <span className="text-2xs text-text-muted">•</span>
+                          <span className="text-2xs text-arkos-gold font-medium">
+                            {item.results.length} leads
+                          </span>
+                        </div>
+                        <p className="text-2xs text-text-muted truncate max-w-md">
+                          {item.query.locations.join(", ")} | {item.query.nicheDescription || "Busca Geral"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xs text-text-muted mb-1">
+                          {new Date(item.timestamp).toLocaleDateString()}
+                        </p>
+                        <span className="text-2xs text-arkos-blue-light font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                          Restaurar →
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Botão buscar (oculto na aba histórico) */}
+          {activeTab !== "history" && (
+            <div className="pt-4 border-t border-arkos-border">
+              <Button
+                variant="gold"
+                size="lg"
+                fullWidth
+                loading={isSearching}
+                onClick={handleSearch}
+                icon={<Search className="h-4 w-4" />}
+                className="h-14 rounded-2xl shadow-xl shadow-arkos-gold/10"
+              >
+                {isSearching
+                  ? `IA Prospectando ${query.locations.join(" e ")}...`
+                  : `Prospectar ${query.limit} Empresas Agora`}
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -453,7 +455,7 @@ export function OutboundSearch({ onConvert }: OutboundSearchProps) {
                   <ProspectCard
                     key={prospect.id}
                     prospect={prospect}
-                    onConvert={onConvert}
+                    onConvert={handleLocalConvert}
                   />
                 ))}
             </div>

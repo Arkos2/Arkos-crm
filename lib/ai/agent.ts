@@ -112,14 +112,14 @@ export async function process_sdr_message(
       .eq("id", lead_id)
       .single();
 
-    const { data: history } = await supabase
+    const { data: previousMessages } = await supabase
       .from("messages")
       .select("role, content")
       .eq("lead_id", lead_id)
       .order("created_at", { ascending: true })
       .limit(12);
 
-    const formattedHistory: any[] = (history || []).map((msg) => ({
+    const formattedHistory: any[] = (previousMessages || []).map((msg: any) => ({
       role: msg.role === "assistant" ? "assistant" : "user",
       content: msg.content,
     }));

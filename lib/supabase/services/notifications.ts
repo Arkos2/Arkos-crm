@@ -96,7 +96,7 @@ export function subscribeToNotifications(
         table: "notifications",
         filter: `user_id=eq.${userId}`,
       },
-      (payload) => callback(payload.new as NotificationRow)
+      (payload: any) => callback(payload.new as NotificationRow)
     )
     .subscribe();
 }

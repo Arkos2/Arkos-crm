@@ -4,7 +4,6 @@ import { useState, useCallback } from "react";
 import { Prospect } from "@/lib/types/prospector";
 import { ProspectCard } from "@/components/agents/prospector/ProspectCard";
 import { OutboundSearch } from "@/components/agents/prospector/OutboundSearch";
-import { MOCK_INBOUND_PROSPECTS, MOCK_PROSPECTOR_STATS } from "@/lib/mock/prospects";
 import { Card, Badge, Button, KPICard, EmptyState } from "@/components/ui";
 import { cn, formatPercent } from "@/lib/utils";
 import {
@@ -14,6 +13,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { findOrCreateOrganization } from "@/lib/supabase/services/organizations";
+import { createContact } from "@/lib/supabase/services/contacts";
+import { createDeal } from "@/lib/supabase/services/deals";
+import { getDefaultPipeline } from "@/lib/supabase/services/pipelines";
 
 type ActiveTab = "inbound" | "outbound";
 
@@ -37,14 +41,26 @@ const TAB_CONFIG = {
 };
 
 export default function ProspectorPage() {
+  const { user, supabaseUser } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>("inbound");
-  const [inboundProspects, setInboundProspects] = useState<Prospect[]>(
-    MOCK_INBOUND_PROSPECTS
-  );
+  const [inboundProspects, setInboundProspects] = useState<Prospect[]>([]);
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [inboundFilter, setInboundFilter] = useState<"all" | "new" | "scored" | "high">("all");
 
-  const stats = MOCK_PROSPECTOR_STATS;
+  const stats = {
+    inbound: {
+      today: 0,
+      week: 0,
+      avgFitScore: 0,
+      conversionRate: 0,
+      topSource: "Nenhuma",
+    },
+    outbound: {
+      searchesToday: 0,
+      prospectsFound: 0,
+      avgFitScore: 0,
+    },
+  };
 
   // ─── ENRIQUECER INBOUND ───
   const handleEnrich = useCallback(async (prospect: Prospect) => {
@@ -115,31 +131,83 @@ export default function ProspectorPage() {
   }, []);
 
   // ─── CONVERTER PARA PIPELINE ───
-  const handleConvert = useCallback((prospect: Prospect) => {
+  const handleConvert = useCallback(async (prospect: Prospect) => {
+    const activeUser = user || supabaseUser;
+
+    if (!activeUser) {
+      toast.error("Você precisa estar logado para converter leads.");
+      return;
+    }
+
     const name =
       prospect.contact?.firstName ||
       prospect.rawData.name ||
       "Lead";
 
-    const company =
+    const companyName =
       prospect.company?.name ||
       prospect.rawData.company ||
       "Empresa";
 
-    toast.success(`Negócio criado: ${company}`, {
-      description: `${name} foi adicionado ao Pipeline!`,
-      action: {
-        label: "Ver Pipeline",
-        onClick: () => window.location.href = "/pipeline",
-      },
-    });
+    const toastId = toast.loading(`Convertendo ${companyName}...`);
 
-    setInboundProspects((prev) =>
-      prev.map((p) =>
-        p.id === prospect.id ? { ...p, status: "converted" } : p
-      )
-    );
-  }, []);
+    try {
+      // 1. Pipeline Padrão
+      const pipeline = await getDefaultPipeline();
+      if (!pipeline) throw new Error("Nenhum pipeline encontrado.");
+
+      // 2. Criar/Achar Organização
+      const org = await findOrCreateOrganization({
+        name: companyName,
+        industry: prospect.company?.industry,
+        size: prospect.company?.size,
+        website: prospect.company?.website,
+      });
+
+      // 3. Criar Contato
+      const contact = await createContact({
+        firstName: name,
+        lastName: prospect.contact?.lastName || "",
+        email: prospect.contact?.email || prospect.rawData.email,
+        phone: prospect.contact?.phone || prospect.rawData.phone,
+        jobTitle: prospect.contact?.jobTitle,
+        organizationId: org.id,
+        isDecisionMaker: prospect.contact?.isDecisionMaker,
+        source: prospect.source,
+      });
+
+      // 4. Criar Negócio (Deal)
+      await createDeal({
+        title: `Negócio: ${companyName}`,
+        pipelineId: pipeline.id,
+        organizationId: org.id,
+        contactId: contact.id,
+        ownerId: activeUser.id,
+        value: 0,
+      });
+
+      toast.success(`Negócio criado: ${companyName}`, {
+        id: toastId,
+        description: `${name} foi adicionado ao Pipeline!`,
+        action: {
+          label: "Ver Pipeline",
+          onClick: () => window.location.href = "/pipeline",
+        },
+      });
+
+      setInboundProspects((prev) =>
+        prev.map((p) =>
+          p.id === prospect.id ? { ...p, status: "converted" } : p
+        )
+      );
+    } catch (err: any) {
+      console.error("Erro ao converter:", err);
+      toast.error("Erro ao converter prospecto", {
+        id: toastId,
+        description: err.message || "Verifique sua conexão.",
+      });
+    }
+  }, [user, supabaseUser]);
 
   // ─── DESCARTAR ───
   const handleDiscard = useCallback((prospect: Prospect) => {

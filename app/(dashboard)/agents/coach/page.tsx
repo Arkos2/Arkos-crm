@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { SellerPerformance, CoachTip } from "@/lib/types/coach";
-import { MOCK_SELLERS, MOCK_PLAYBOOKS } from "@/lib/mock/coach";
+import { SellerPerformance, CoachTip, Playbook } from "@/lib/types/coach";
 import { SellerScoreCard } from "@/components/agents/coach/SellerScoreCard";
 import { CoachTipCard } from "@/components/agents/coach/CoachTipCard";
 import { PeerComparisonChart } from "@/components/agents/coach/PeerComparisonChart";
@@ -40,15 +39,17 @@ const TABS: Array<{
 ];
 
 export default function CoachPage() {
-  const [sellers, setSellers] = useState<SellerPerformance[]>(MOCK_SELLERS);
-  const [selectedId, setSelectedId] = useState<string>(MOCK_SELLERS[0].id);
+  const [sellers, setSellers] = useState<SellerPerformance[]>([]);
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("" );
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const selectedSeller = sellers.find((s) => s.id === selectedId)!;
+  const selectedSeller = sellers.find((s) => s.id === selectedId) || sellers[0];
 
   // Gerar novos tips com Claude
   const handleGenerateTips = useCallback(async () => {
+    if (!selectedSeller) return;
     setIsGenerating(true);
     try {
       const res = await fetch("/api/agents/coach", {
@@ -69,7 +70,7 @@ export default function CoachPage() {
           )
         );
         toast.success(
-          `${data.tips.length} novos tips gerados para ${selectedSeller.name}!`
+          `${data.tips.length} novos tips gerados!`
         );
         setActiveTab("tips");
       }
@@ -79,6 +80,26 @@ export default function CoachPage() {
       setIsGenerating(false);
     }
   }, [selectedSeller, selectedId]);
+
+  if (sellers.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="p-4 rounded-full bg-arkos-surface-2 mb-4">
+          <Users className="h-10 w-10 text-text-muted" />
+        </div>
+        <h2 className="text-xl font-bold text-text-primary mb-2">
+          Nenhum vendedor encontrado
+        </h2>
+        <p className="text-sm text-text-secondary max-w-xs mx-auto mb-6">
+          Cadastre membros da sua equipe nas configurações para começar a usar o coaching inteligente.
+        </p>
+        <Link href="/settings">
+          <Button variant="primary">Configurar Equipe</Button>
+        </Link>
+      </div>
+    );
+  }
+
 
   const handleDismissTip = (tipId: string) => {
     setSellers((prev) =>
@@ -101,9 +122,9 @@ export default function CoachPage() {
   const urgentTips = activeTips.filter(
     (t) => t.priority === "urgent" || t.priority === "high"
   );
-  const revenueProgress = Math.round(
-    (selectedSeller.revenue / selectedSeller.revenueTarget) * 100
-  );
+  const revenueProgress = selectedSeller.revenueTarget > 0 
+    ? Math.round((selectedSeller.revenue / selectedSeller.revenueTarget) * 100)
+    : 0;
 
   return (
     <div className="space-y-5">
@@ -167,7 +188,7 @@ export default function CoachPage() {
               .map((seller, i) => (
                 <div key={seller.id} className="flex items-center gap-2">
                   <span className="text-base w-6 text-center shrink-0">
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "4."}
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
                   </span>
                   <div className="flex-1 min-w-0">
                     <SellerScoreCard
@@ -187,17 +208,19 @@ export default function CoachPage() {
           {/* KPI geral da equipe */}
           <Card padding="sm" className="mt-2">
             <p className="text-2xs font-semibold text-text-muted uppercase tracking-wide mb-3">
-              Equipe — Jan/25
+              Performance da Equipe
             </p>
             <div className="space-y-2">
               {[
                 {
                   label: "Meta coletiva",
-                  value: `${Math.round(
-                    (sellers.reduce((s, v) => s + v.revenue, 0) /
-                      sellers.reduce((s, v) => s + v.revenueTarget, 0)) *
-                      100
-                  )}%`,
+                  value: sellers.reduce((s, v) => s + v.revenueTarget, 0) > 0
+                    ? `${Math.round(
+                        (sellers.reduce((s, v) => s + v.revenue, 0) /
+                          sellers.reduce((s, v) => s + v.revenueTarget, 0)) *
+                          100
+                      )}%`
+                    : "0%",
                   color: "text-warning",
                 },
                 {
@@ -274,15 +297,19 @@ export default function CoachPage() {
                     </h4>
                   </div>
                   <ul className="space-y-2">
-                    {selectedSeller.strengths.map((s, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2 text-xs text-text-secondary"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0 mt-1.5" />
-                        {s}
-                      </li>
-                    ))}
+                    {selectedSeller.strengths.length > 0 ? (
+                      selectedSeller.strengths.map((s, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-xs text-text-secondary"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0 mt-1.5" />
+                          {s}
+                        </li>
+                      ))
+                    ) : (
+                      <p className="text-2xs text-text-muted italic">Nenhum ponto forte identificado ainda</p>
+                    )}
                   </ul>
                 </Card>
 
@@ -294,15 +321,19 @@ export default function CoachPage() {
                     </h4>
                   </div>
                   <ul className="space-y-2">
-                    {selectedSeller.improvements.map((s, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2 text-xs text-text-secondary"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0 mt-1.5" />
-                        {s}
-                      </li>
-                    ))}
+                    {selectedSeller.improvements.length > 0 ? (
+                      selectedSeller.improvements.map((s, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-xs text-text-secondary"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-warning shrink-0 mt-1.5" />
+                          {s}
+                        </li>
+                      ))
+                    ) : (
+                      <p className="text-2xs text-text-muted italic">Nenhuma área de melhoria identificada ainda</p>
+                    )}
                   </ul>
                 </Card>
               </div>
@@ -378,7 +409,7 @@ export default function CoachPage() {
                         medium: 2,
                         low: 3,
                       };
-                      return order[a.priority] - order[b.priority];
+                      return order[a.priority as keyof typeof order] - order[b.priority as keyof typeof order];
                     })
                     .map((tip) => (
                       <CoachTipCard
@@ -539,88 +570,92 @@ export default function CoachPage() {
               </div>
 
               <div className="space-y-5">
-                {selectedSeller.activities.map((activity) => {
-                  const pct = Math.round(
-                    (activity.value / activity.target) * 100
-                  );
-                  const isGood = pct >= 100;
-                  const isWarning = pct >= 70 && pct < 100;
+                {selectedSeller.activities.length > 0 ? (
+                  selectedSeller.activities.map((activity) => {
+                    const pct = activity.target > 0 
+                      ? Math.round((activity.value / activity.target) * 100)
+                      : 0;
+                    const isGood = pct >= 100;
+                    const isWarning = pct >= 70 && pct < 100;
 
-                  return (
-                    <div key={activity.label} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <CheckSquare
-                            className={cn(
-                              "h-4 w-4",
-                              isGood
-                                ? "text-success"
-                                : isWarning
-                                ? "text-warning"
-                                : "text-danger"
-                            )}
-                          />
-                          <span className="text-sm font-medium text-text-primary">
-                            {activity.label}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <span
+                    return (
+                      <div key={activity.label} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CheckSquare
                               className={cn(
-                                "text-lg font-bold",
+                                "h-4 w-4",
                                 isGood
                                   ? "text-success"
                                   : isWarning
                                   ? "text-warning"
                                   : "text-danger"
                               )}
-                            >
-                              {activity.value}
-                            </span>
-                            <span className="text-text-muted text-sm">
-                              /{activity.target}
+                            />
+                            <span className="text-sm font-medium text-text-primary">
+                              {activity.label}
                             </span>
                           </div>
 
-                          <div
-                            className={cn(
-                              "flex items-center gap-1 text-2xs font-medium w-12 justify-end",
-                              activity.trend > 0
-                                ? "text-success"
-                                : activity.trend < 0
-                                ? "text-danger"
-                                : "text-text-muted"
-                            )}
-                          >
-                            {activity.trend > 0 ? "↑" : activity.trend < 0 ? "↓" : "–"}
-                            {Math.abs(activity.trend)}%
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <span
+                                className={cn(
+                                  "text-lg font-bold",
+                                  isGood
+                                    ? "text-success"
+                                    : isWarning
+                                    ? "text-warning"
+                                    : "text-danger"
+                                )}
+                              >
+                                {activity.value}
+                              </span>
+                              <span className="text-text-muted text-sm">
+                                /{activity.target}
+                              </span>
+                            </div>
+
+                            <div
+                              className={cn(
+                                "flex items-center gap-1 text-2xs font-medium w-12 justify-end",
+                                activity.trend > 0
+                                  ? "text-success"
+                                  : activity.trend < 0
+                                  ? "text-danger"
+                                  : "text-text-muted"
+                              )}
+                            >
+                              {activity.trend > 0 ? "↑" : activity.trend < 0 ? "↓" : "–"}
+                              {Math.abs(activity.trend)}%
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-1">
-                        <ProgressBar
-                          value={pct}
-                          autoColor
-                          size="md"
-                          animate
-                          showLabel
-                        />
-                        <p className="text-2xs text-text-muted">
-                          {activity.value} {activity.unit} realizados este mês
-                          {pct < 100 && (
-                            <span className="text-warning ml-1">
-                              · Faltam {activity.target - activity.value}{" "}
-                              {activity.unit}
-                            </span>
-                          )}
-                        </p>
+                        <div className="space-y-1">
+                          <ProgressBar
+                            value={pct}
+                            autoColor
+                            size="md"
+                            animate
+                            showLabel
+                          />
+                          <p className="text-2xs text-text-muted">
+                            {activity.value} {activity.unit} realizados este mês
+                            {pct < 100 && (
+                              <span className="text-warning ml-1">
+                                · Faltam {Math.max(0, activity.target - activity.value)}{" "}
+                                {activity.unit}
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-text-muted text-center py-10">Nenhuma atividade registrada</p>
+                )}
               </div>
 
               {/* Insight do coach */}
@@ -631,11 +666,7 @@ export default function CoachPage() {
                     <strong className="text-text-primary">
                       Coach IA:
                     </strong>{" "}
-                    {selectedSeller.activities.filter(
-                      (a) => (a.value / a.target) < 0.7
-                    ).length > 2
-                      ? `${selectedSeller.name.split(" ")[0]} está abaixo da meta em várias métricas. Volume de atividade é o principal preditor de resultado — cada 10% de aumento nas ligações gera +1.4 negócio fechado historicamente.`
-                      : `${selectedSeller.name.split(" ")[0]} está com boa cadência de atividades. Mantenha o ritmo e foque na qualidade das abordagens.`}
+                    Aguardando dados de atividade para fornecer insights de performance.
                   </span>
                 </p>
               </div>
@@ -647,7 +678,7 @@ export default function CoachPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-text-secondary">
-                  {MOCK_PLAYBOOKS.length} playbooks disponíveis
+                  {playbooks.length} playbooks disponíveis
                 </p>
                 <Button
                   variant="secondary"
@@ -658,11 +689,23 @@ export default function CoachPage() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {MOCK_PLAYBOOKS.map((playbook) => (
-                  <PlaybookCard key={playbook.id} playbook={playbook} />
-                ))}
-              </div>
+              {playbooks.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {playbooks.map((playbook) => (
+                    <PlaybookCard key={playbook.id} playbook={playbook} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16 border-2 border-dashed border-arkos-border rounded-2xl">
+                  <BookOpen className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                  <p className="text-sm text-text-secondary">
+                    Nenhum playbook cadastrado
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    Crie playbooks para padronizar o processo de vendas da sua equipe
+                  </p>
+                </div>
+              )}
 
               {/* Banner IA */}
               <Card className="border-arkos-gold/20 bg-arkos-gold/5">
@@ -673,8 +716,7 @@ export default function CoachPage() {
                       Gerar Playbook Personalizado
                     </p>
                     <p className="text-xs text-text-secondary leading-relaxed">
-                      O Coach IA pode criar um playbook específico para{" "}
-                      {selectedSeller.name.split(" ")[0]} baseado nos padrões
+                      O Coach IA pode criar um playbook específico baseado nos padrões
                       identificados e nas áreas de melhoria. Leva menos de
                       30 segundos.
                     </p>
@@ -685,7 +727,7 @@ export default function CoachPage() {
                       icon={<Zap className="h-3.5 w-3.5" />}
                       onClick={() => toast.info("Gerando playbook personalizado...")}
                     >
-                      Gerar para {selectedSeller.name.split(" ")[0]}
+                      Gerar Playbook
                     </Button>
                   </div>
                 </div>

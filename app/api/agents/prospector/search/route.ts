@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
 - Setores: ${query.industries.join(", ")}
 - Tamanhos: ${query.sizes.map((s) => SIZE_LABELS[s] || s).join(", ")}
 - Cargos alvo: ${query.roles.join(", ")}
-- Localização: ${query.location || "Brasil (qualquer estado)"}
+- Localização: ${query.locations.join(", ") || "Brasil (qualquer estado)"}
+- Nicho Específico: ${query.nicheDescription || "Não especificado"}
+- Detalhes do ICP (Faturamento/Perfil): ${query.icpDetails || "Não especificado"}
 - Dores/Keywords: ${query.painPoints?.join(", ") || "Automação, processos manuais, integração"}
 - Palavras-chave adicionais: ${query.keywords?.join(", ") || "Nenhuma"}
 

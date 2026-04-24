@@ -129,6 +129,17 @@ export function ProspectCard({
                   {prospect.company?.name || prospect.rawData.company || "Empresa não informada"}
                 </span>
               </div>
+              {prospect.company?.website && (
+                <a 
+                  href={prospect.company.website.startsWith("http") ? prospect.company.website : `https://${prospect.company.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 mt-0.5 text-xs text-arkos-blue-light hover:underline"
+                >
+                  <Globe className="h-3 w-3" />
+                  {prospect.company.website.replace(/^https?:\/\//, "")}
+                </a>
+              )}
             </div>
           </div>
 
@@ -149,28 +160,51 @@ export function ProspectCard({
           </div>
         </div>
 
-        {/* Localização + Tamanho */}
-        {prospect.company && (
-          <div className="flex items-center gap-3 text-2xs text-text-muted">
-            {prospect.company.city && (
-              <div className="flex items-center gap-1">
+        {/* Localização + Tamanho + Redes Sociais */}
+        <div className="flex flex-wrap items-center gap-3 text-2xs text-text-muted">
+          {prospect.company && (
+            <>
+              {prospect.company.city && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {prospect.company.city} / {prospect.company.state || "Brasil"}
+                </div>
+              )}
+              {prospect.company.size && (
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {SIZE_LABEL[prospect.company.size]}
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* Links Externos (Maps, GMB, Redes) */}
+          <div className="flex items-center gap-2 border-l border-arkos-border pl-3">
+            {prospect.company?.city && (
+              <a 
+                href={`https://www.google.com/maps/search/${encodeURIComponent(`${prospect.company.name} ${prospect.company.city}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-arkos-blue-light transition-colors"
+                title="Ver no Google Maps"
+              >
                 <MapPin className="h-3 w-3" />
-                {prospect.company.city}, {prospect.company.state}
-              </div>
+              </a>
             )}
-            {prospect.company.size && (
-              <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {SIZE_LABEL[prospect.company.size]}
-              </div>
-            )}
-            {prospect.company.industry && (
-              <Badge variant="default" size="sm">
-                {prospect.company.industry}
-              </Badge>
+            {prospect.company?.linkedinUrl && (
+              <a 
+                href={prospect.company.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-arkos-blue-light transition-colors"
+                title="LinkedIn da Empresa"
+              >
+                <Building2 className="h-3 w-3" />
+              </a>
             )}
           </div>
-        )}
+        </div>
 
         {/* FIT Score compacto */}
         {prospect.fitScore && (
@@ -330,7 +364,25 @@ export function ProspectCard({
             </Button>
           )}
 
-          {prospect.fitScore?.recommendation !== "discard" && (
+          {/* Ação de Contato WhatsApp */}
+          {(prospect.contact?.phone || prospect.rawData.phone) && (
+            <a
+              href={`https://web.whatsapp.com/send?phone=${(prospect.contact?.phone || prospect.rawData.phone)?.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="secondary"
+                size="xs"
+                className="text-success hover:bg-success/10"
+                icon={<Phone className="h-3 w-3" />}
+              >
+                WhatsApp
+              </Button>
+            </a>
+          )}
+
+          {prospect.fitScore?.recommendation !== "discard" && prospect.status !== "converted" && (
             <Button
               variant="primary"
               size="xs"
@@ -341,7 +393,11 @@ export function ProspectCard({
             </Button>
           )}
 
-          {prospect.fitScore?.recommendation === "discard" && (
+          {prospect.status === "converted" && (
+            <Badge variant="success">No Pipeline</Badge>
+          )}
+
+          {prospect.fitScore?.recommendation === "discard" && prospect.status !== "discarded" && (
             <Button
               variant="danger"
               size="xs"

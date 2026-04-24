@@ -14,7 +14,7 @@ export async function analyzeImage(
   mimeType: string,
   prompt: string
 ): Promise<string> {
-  const model = getClient().getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = getClient().getGenerativeModel({ model: "gemini-flash-latest" });
 
   const result = await model.generateContent([
     {
@@ -30,7 +30,7 @@ export async function analyzeImage(
 }
 
 export async function analyzeText(prompt: string): Promise<string> {
-  const model = getClient().getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = getClient().getGenerativeModel({ model: "gemini-flash-latest" });
   const result = await model.generateContent(prompt);
   return result.response.text();
 }
@@ -39,7 +39,7 @@ export async function analyzeWithContext(
   messages: { role: "user" | "model"; content: string }[],
   newMessage: string
 ): Promise<string> {
-  const model = getClient().getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = getClient().getGenerativeModel({ model: "gemini-flash-latest" });
   const chat = model.startChat({
     history: messages.map((m) => ({
       role: m.role,

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Conversation, Message, AISuggestedReply } from "@/lib/types/communication";
-import { MOCK_CONVERSATIONS } from "@/lib/mock/conversations";
 import { MessageBubble } from "@/components/communication/MessageBubble";
 import { AISuggestionBar } from "@/components/communication/AISuggestionBar";
 import { Avatar, Badge, Button, EmptyState } from "@/components/ui";
@@ -35,12 +34,8 @@ const STATUS_UNREAD_COLOR: Record<number, string> = {
 };
 
 export default function CommunicationPage() {
-  const [conversations, setConversations] = useState<Conversation[]>(
-    MOCK_CONVERSATIONS
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(
-    MOCK_CONVERSATIONS[0]?.id || null
-  );
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "unread" | "open" | "mine">("all");
   const [inputValue, setInputValue] = useState("");

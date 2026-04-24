@@ -25,6 +25,7 @@ interface PipelineBoardProps {
   initialDeals: Deal[];
   onDealMove?: (dealId: string, newStage: DealStage) => Promise<void>;
   onDealUpdate?: (dealId: string, updates: Partial<Deal>) => Promise<void>;
+  onAddDeal?: (stageId: string) => void;
 }
 
 export function PipelineBoard({
@@ -32,6 +33,7 @@ export function PipelineBoard({
   initialDeals,
   onDealMove,
   onDealUpdate,
+  onAddDeal,
 }: PipelineBoardProps) {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
@@ -172,9 +174,7 @@ export function PipelineBoard({
                 stage={stage}
                 deals={getDealsByStage(stage.id as DealStage)}
                 onDealClick={setSelectedDeal}
-                onAddDeal={(stageId) => {
-                   toast.info("Abertura de modal de novo negócio...");
-                }}
+                onAddDeal={onAddDeal}
               />
             ))}
         </div>

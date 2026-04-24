@@ -243,9 +243,7 @@ export async function getMetricasDashboard() {
       .eq('is_arquivado', false),
   ])
 
-  const receitaTotal = (leadsFechados ?? []).reduce(
-    (acc, l) => acc + (l.valor_fechado ?? 0), 0
-  )
+  const receitaTotal = (leadsFechados ?? []).reduce((acc: number, l: { valor_fechado: number | null }) => acc + (l.valor_fechado ?? 0), 0)
 
   return {
     totalLeads:    totalLeads    ?? 0,

@@ -8,83 +8,10 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Agentes IA" };
 
-const MOCK_METRICS: AgentMetrics[] = [
-  {
-    type: "prospector",
-    status: "active",
-    todayActions: 12,
-    weekActions: 67,
-    successRate: 78,
-    lastAction: "Encontrou empresa LogiSul — score 82/100",
-    lastActionAt: new Date(Date.now() - 15 * 60000).toISOString(),
-    primaryMetric: { label: "Leads hoje", value: "12" },
-    secondaryMetric: { label: "Score médio", value: "74" },
-  },
-  {
-    type: "qualifier",
-    status: "active",
-    todayActions: 8,
-    weekActions: 43,
-    successRate: 71,
-    lastAction: "EduPlus qualificado — BANT 85/100",
-    lastActionAt: new Date(Date.now() - 2 * 60000).toISOString(),
-    primaryMetric: { label: "Conversas ativas", value: "8" },
-    secondaryMetric: { label: "Qualificados hoje", value: "3" },
-  },
-  {
-    type: "writer",
-    status: "active",
-    todayActions: 5,
-    weekActions: 28,
-    successRate: 84,
-    lastAction: "Proposta LogiMax gerada em 12s",
-    lastActionAt: new Date(Date.now() - 45 * 60000).toISOString(),
-    primaryMetric: { label: "Conteúdos hoje", value: "5" },
-    secondaryMetric: { label: "Taxa de uso", value: "84%" },
-  },
-  {
-    type: "followup",
-    status: "active",
-    todayActions: 23,
-    weekActions: 134,
-    successRate: 67,
-    lastAction: "Sequência 'Pós-Demo' enviou WhatsApp para 4 leads",
-    lastActionAt: new Date(Date.now() - 30 * 60000).toISOString(),
-    primaryMetric: { label: "Sequências ativas", value: "23" },
-    secondaryMetric: { label: "Taxa de resposta", value: "67%" },
-  },
-  {
-    type: "analyst",
-    status: "active",
-    todayActions: 3,
-    weekActions: 18,
-    successRate: 91,
-    lastAction: "Detectou gargalo em Proposta → Negociação",
-    lastActionAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-    primaryMetric: { label: "Insights hoje", value: "3" },
-    secondaryMetric: { label: "Precisão", value: "91%" },
-  },
-  {
-    type: "coach",
-    status: "paused",
-    todayActions: 0,
-    weekActions: 12,
-    successRate: 88,
-    lastAction: "4 dicas enviadas para Pedro Lima",
-    lastActionAt: new Date(Date.now() - 6 * 3600000).toISOString(),
-    primaryMetric: { label: "Tips esta semana", value: "12" },
-    secondaryMetric: { label: "Impacto positivo", value: "88%" },
-  },
-];
+const MOCK_METRICS: AgentMetrics[] = [];
 
-const RECENT_LOGS = [
-  { agent: "Qualificador", action: "EduPlus (Rafael Costa) — BANT atingiu 85/100", time: "há 2min", level: "success" },
-  { agent: "Follow-Up", action: "Sequência 'Pós-Demo' — WhatsApp enviado para 4 leads", time: "há 15min", level: "info" },
-  { agent: "Analista", action: "Insight gerado: Gargalo Proposta→Negociação (-15%)", time: "há 45min", level: "warning" },
-  { agent: "Redator", action: "Proposta LogiMax_v2.pdf gerada automaticamente", time: "há 1h", level: "success" },
-  { agent: "Prospector", action: "12 novos leads encontrados no setor Logística", time: "há 2h", level: "info" },
-  { agent: "Qualificador", action: "Lead descartado: budget insuficiente (BANT: 28)", time: "há 3h", level: "danger" },
-];
+const RECENT_LOGS: any[] = [];
+
 
 export default function AgentsPage() {
   const activeCount = MOCK_METRICS.filter((m) => m.status === "active").length;

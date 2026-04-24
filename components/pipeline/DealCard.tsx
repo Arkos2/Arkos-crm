@@ -60,7 +60,7 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
 
   const tempConfig = TEMP_CONFIG[deal.temperature];
   const primarySuggestion = deal.aiSuggestions?.[0];
-  const pendingTasks = deal.tasks.filter((t) => !t.isCompleted).length;
+  const pendingTasks = deal.tasks?.filter((t) => !t.isCompleted).length || 0;
   const isOverdue =
     deal.expectedCloseDate &&
     new Date(deal.expectedCloseDate) < new Date();
@@ -127,9 +127,9 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
               {/* Empresa */}
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-xs font-bold text-text-primary truncate">
-                  {deal.organization.name}
+                  {deal.organization?.name || "Sem Empresa"}
                 </span>
-                {deal.organization.industry && (
+                {deal.organization?.industry && (
                   <Badge variant="default" size="sm">
                     {deal.organization.industry}
                   </Badge>
@@ -156,21 +156,21 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
           {/* ─── CONTATO + OWNER ─── */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Avatar name={deal.contact.firstName + " " + deal.contact.lastName} size="xs" />
+              <Avatar name={`${deal.contact?.firstName || ""} ${deal.contact?.lastName || ""}`} size="xs" />
               <div>
                 <p className="text-2xs font-medium text-text-secondary leading-none">
-                  {deal.contact.firstName} {deal.contact.lastName}
+                  {deal.contact?.firstName || "Contato"} {deal.contact?.lastName || "Indefinido"}
                 </p>
                 <p className="text-2xs text-text-muted leading-none mt-0.5">
-                  {deal.contact.jobTitle}
+                  {deal.contact?.jobTitle || "Sem cargo"}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5">
-              <Avatar name={deal.ownerName} size="xs" />
+              <Avatar name={deal.ownerName || "Agente"} size="xs" />
               <span className="text-2xs text-text-muted">
-                {deal.ownerName.split(" ")[0]}
+                {deal.ownerName?.split(" ")[0] || "Agente"}
               </span>
             </div>
           </div>
@@ -212,7 +212,7 @@ export function DealCard({ deal, onClick, isDragging }: DealCardProps) {
             )}
 
             {/* Docs */}
-            {deal.documents.length > 0 && (
+            {(deal.documents?.length || 0) > 0 && (
               <div className="flex items-center gap-1 text-2xs text-text-muted">
                 <FileText className="h-3 w-3" />
                 <span>{deal.documents.length}</span>
@@ -302,7 +302,7 @@ export function DealCardGhost({ deal }: { deal: Deal }) {
   return (
     <div className="rounded-xl border border-arkos-blue/40 bg-arkos-blue/5 p-3 opacity-60">
       <p className="text-xs font-bold text-text-primary">
-        {deal.organization.name}
+        {deal.organization?.name || "Sem Empresa"}
       </p>
       <p className="text-sm font-bold text-arkos-blue-light mt-1">
         {formatCurrency(deal.value)}

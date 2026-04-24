@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/lib/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { KPICard, Card, CardHeader, CardTitle, Badge, Button, Avatar, ProgressBar } from "@/components/ui";
 import { InsightCard } from "@/components/agents/InsightCard";
-import { MOCK_INSIGHTS } from "@/lib/mock/analytics";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
   DollarSign, TrendingUp, Users, Clock,
@@ -18,41 +17,31 @@ import {
 // Metadata cannot be exported in a client component
 
 const KPI_DATA = [
-  { title: "Pipeline Total", value: 847500, valueFormat: "currency" as const, trend: 12, trendLabel: "vs mês anterior", icon: <DollarSign className="h-4 w-4" /> },
-  { title: "Negócios Ativos", value: 23, valueFormat: "number" as const, trend: 3, trendLabel: "novos esta semana", icon: <ShoppingCart className="h-4 w-4" /> },
-  { title: "Conversão Geral", value: 67, valueFormat: "percent" as const, trend: 5, icon: <TrendingUp className="h-4 w-4" /> },
-  { title: "Ciclo Médio", value: 12, valueFormat: "days" as const, trend: -14, invertTrend: true, icon: <Clock className="h-4 w-4" /> },
-  { title: "CAC", value: 2340, valueFormat: "currency" as const, trend: -8, invertTrend: true, icon: <Users className="h-4 w-4" /> },
-  { title: "LTV", value: 18700, valueFormat: "currency" as const, trend: 15, icon: <Heart className="h-4 w-4" /> },
-  { title: "LTV/CAC", value: "8.0x", valueFormat: "text" as const, trend: 20, icon: <Zap className="h-4 w-4" /> },
-  { title: "NPS", value: 94, valueFormat: "number" as const, trend: 3, suffix: "pts", icon: <Heart className="h-4 w-4" /> },
+  { title: "Pipeline Total", value: 0, valueFormat: "currency" as const, trend: 0, icon: <DollarSign className="h-4 w-4" /> },
+  { title: "Negócios Ativos", value: 0, valueFormat: "number" as const, trend: 0, icon: <ShoppingCart className="h-4 w-4" /> },
+  { title: "Conversão Geral", value: 0, valueFormat: "percent" as const, trend: 0, icon: <TrendingUp className="h-4 w-4" /> },
+  { title: "Ciclo Médio", value: 0, valueFormat: "days" as const, trend: 0, icon: <Clock className="h-4 w-4" /> },
+  { title: "CAC", value: 0, valueFormat: "currency" as const, trend: 0, icon: <Users className="h-4 w-4" /> },
+  { title: "LTV", value: 0, valueFormat: "currency" as const, trend: 0, icon: <Heart className="h-4 w-4" /> },
+  { title: "LTV/CAC", value: "0.0x", valueFormat: "text" as const, trend: 0, icon: <Zap className="h-4 w-4" /> },
+  { title: "NPS", value: 0, valueFormat: "number" as const, trend: 0, suffix: "pts", icon: <Heart className="h-4 w-4" /> },
 ];
 
-const PRIORITY_ACTIONS = [
-  { type: "danger", icon: <AlertCircle className="h-4 w-4" />, text: "3 leads em Diagnóstico sem contato há 48h", cta: "Resolver Agora", href: "/pipeline" },
-  { type: "warning", icon: <Info className="h-4 w-4" />, text: "Proposta da LogiMax visualizada há 10min", cta: "Ligar Agora", href: "/pipeline" },
-  { type: "success", icon: <CheckCircle2 className="h-4 w-4" />, text: "2 contratos prontos para assinatura", cta: "Enviar", href: "/documents" },
-  { type: "info", icon: <Zap className="h-4 w-4" />, text: "EduPlus qualificado pelo agente IA — BANT 85/100", cta: "Ver Lead", href: "/pipeline" },
-];
+const PRIORITY_ACTIONS: any[] = [];
 
-const TEAM_DATA = [
-  { name: "Maria Santos", value: 125000, target: 150000, role: "Sênior" },
-  { name: "João Silva", value: 112000, target: 150000, role: "Pleno" },
-  { name: "Pedro Lima", value: 78000, target: 120000, role: "Pleno" },
-  { name: "Ana Costa", value: 67000, target: 120000, role: "Júnior" },
-];
+const TEAM_DATA: any[] = [];
 
 const AGENTS = [
-  { name: "Prospector", icon: <Search className="h-3.5 w-3.5" />, metric: "12 leads", active: true, href: "/agents/prospector" },
-  { name: "Qualificador", icon: <MessageSquare className="h-3.5 w-3.5" />, metric: "8 conversas", active: true, href: "/agents/qualifier" },
-  { name: "Redator", icon: <FileText className="h-3.5 w-3.5" />, metric: "5 criados", active: true, href: "/agents/writer" },
-  { name: "Follow-Up", icon: <RefreshCw className="h-3.5 w-3.5" />, metric: "23 sequências", active: true, href: "/agents/followup" },
-  { name: "Analista", icon: <BarChart3 className="h-3.5 w-3.5" />, metric: "3 insights", active: true, href: "/agents/analyst" },
-  { name: "Coach", icon: <Target className="h-3.5 w-3.5" />, metric: "4 tips", active: false, href: "/agents/coach" },
+  { name: "Prospector", icon: <Search className="h-3.5 w-3.5" />, metric: "0 leads", active: true, href: "/agents/prospector" },
+  { name: "Qualificador", icon: <MessageSquare className="h-3.5 w-3.5" />, metric: "0 conversas", active: true, href: "/agents/qualifier" },
+  { name: "Redator", icon: <FileText className="h-3.5 w-3.5" />, metric: "0 criados", active: true, href: "/agents/writer" },
+  { name: "Follow-Up", icon: <RefreshCw className="h-3.5 w-3.5" />, metric: "0 sequências", active: true, href: "/agents/followup" },
+  { name: "Analista", icon: <BarChart3 className="h-3.5 w-3.5" />, metric: "0 insights", active: true, href: "/agents/analyst" },
+  { name: "Coach", icon: <Target className="h-3.5 w-3.5" />, metric: "0 tips", active: false, href: "/agents/coach" },
 ];
 
 // Top 2 insights urgentes para o dashboard
-const TOP_INSIGHTS = MOCK_INSIGHTS.filter((i) => i.level === "urgent").slice(0, 2);
+const TOP_INSIGHTS: any[] = [];
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -76,9 +65,6 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="gold" dot dotAnimate size="md">Ao vivo</Badge>
-          <Button variant="gold" size="sm" icon={<Plus className="h-3.5 w-3.5" />}>
-            Novo Negócio
-          </Button>
         </div>
       </div>
 
@@ -170,12 +156,12 @@ export default function DashboardPage() {
 
           <div className="space-y-3">
             {[
-              { label: "Leads", value: 100, total: 100 },
-              { label: "Qualificados", value: 68, total: 100 },
-              { label: "Reunião", value: 42, total: 100 },
-              { label: "Proposta", value: 28, total: 100, warning: true },
-              { label: "Negociação", value: 19, total: 100 },
-              { label: "Fechado", value: 14, total: 100 },
+              { label: "Leads", value: 0, total: 100 },
+              { label: "Qualificados", value: 0, total: 100 },
+              { label: "Reunião", value: 0, total: 100 },
+              { label: "Proposta", value: 0, total: 100 },
+              { label: "Negociação", value: 0, total: 100 },
+              { label: "Fechado", value: 0, total: 100 },
             ].map((stage) => (
               <div key={stage.label} className="flex items-center gap-3">
                 <span className="text-xs text-text-secondary w-20 shrink-0">
@@ -184,7 +170,7 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <ProgressBar
                     value={stage.value}
-                    variant={stage.warning ? "warning" : "blue"}
+                    variant="blue"
                     size="md"
                     animate
                   />
@@ -196,12 +182,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-arkos-border">
-            <p className="text-xs text-text-secondary flex items-start gap-2">
-              <Bot className="h-3.5 w-3.5 text-arkos-gold shrink-0 mt-0.5" />
-              <span>Gargalo detectado em Proposta → Negociação (53%)</span>
-            </p>
-          </div>
         </Card>
       </div>
 
