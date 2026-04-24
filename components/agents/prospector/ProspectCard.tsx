@@ -75,6 +75,7 @@ export function ProspectCard({
 }: ProspectCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
 
   const statusCfg = STATUS_CONFIG[prospect.status];
   const sourceCfg = SOURCE_CONFIG[prospect.source];
@@ -386,8 +387,17 @@ export function ProspectCard({
             <Button
               variant="primary"
               size="xs"
-              onClick={() => onConvert?.(prospect)}
-              icon={<ArrowRight className="h-3 w-3" />}
+              loading={isConverting}
+              onClick={async () => {
+                if (!onConvert) return;
+                setIsConverting(true);
+                try {
+                  await (onConvert(prospect) as any);
+                } finally {
+                  setIsConverting(false);
+                }
+              }}
+              icon={isConverting ? undefined : <ArrowRight className="h-3 w-3" />}
             >
               Criar Negócio
             </Button>

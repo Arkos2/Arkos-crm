@@ -239,12 +239,12 @@ export default function PipelinePage() {
                     {formatCurrency(deal.value)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant="info" size="sm">{deal.stage.replace("_", " ")}</Badge>
+                    <Badge variant="info" size="sm">{deal.stage ? deal.stage.replace("_", " ") : "Sem Etapa"}</Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2 text-2xs text-text-muted">
                       <Calendar className="h-3 w-3" />
-                      {new Date(deal.createdAt).toLocaleDateString()}
+                      {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString() : "Sem Data"}
                     </div>
                   </td>
                 </tr>
