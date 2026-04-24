@@ -6,6 +6,7 @@ if (process.env.NODE_ENV === "development") {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  trailingSlash: false,
 
   // Otimizações de produção
   compress: true,
