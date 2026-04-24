@@ -1,5 +1,5 @@
 import { generateText } from "@/lib/ai/service";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 
 
 
@@ -104,6 +104,7 @@ export async function process_sdr_message(
   newMessage: string,
   phone: string
 ): Promise<AgentResponse> {
+  const supabase = await createClient();
   try {
     // 1. Pega Contexto do Lead e Histórico
     const { data: lead } = await supabase

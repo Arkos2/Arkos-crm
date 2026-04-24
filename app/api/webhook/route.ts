@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 import { process_sdr_message } from '@/lib/ai/agent';
@@ -31,6 +31,7 @@ export async function GET(request: Request) {
 
 // ─── RECEBER MENSAGENS E STATUS (POST) ───
 export async function POST(request: Request) {
+  const supabase = await createClient();
   try {
     const body = await request.json();
 
