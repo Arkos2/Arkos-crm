@@ -89,10 +89,19 @@ export function OutboundSearch({ onConvert }: OutboundSearchProps) {
     setHasSearched(true);
 
     try {
+      const savedSettings = localStorage.getItem("arkos_ai_settings");
+      const aiConfig = savedSettings ? JSON.parse(savedSettings) : {};
+
       const res = await fetch("/api/agents/prospector/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ 
+          query,
+          config: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature
+          }
+        }),
       });
 
       if (!res.ok) throw new Error();

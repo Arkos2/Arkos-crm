@@ -1,4 +1,4 @@
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { supabase } from "@/lib/supabase";
 
 
@@ -141,9 +141,7 @@ export async function process_sdr_message(
 
 Responda à última mensagem do lead de forma natural e estratégica.`;
 
-    // 2. Chama o Gemini
-    const rawText = await analyzeText(LUCAS_SYSTEM_PROMPT + "\n\n" + contextPrompt + "\n\n" + JSON.stringify(formattedHistory));
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText } = await generateText(LUCAS_SYSTEM_PROMPT + "\n\n" + contextPrompt + "\n\n" + JSON.stringify(formattedHistory));
     
     // Extrair JSON
     let parsed: AgentResponse;

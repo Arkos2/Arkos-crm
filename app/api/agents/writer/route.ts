@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { WRITER_PROMPTS } from "@/lib/ai/prompts/writer";
 import { ContentType } from "@/lib/types/agent";
 
@@ -23,8 +23,8 @@ interface WriterRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: WriterRequest = await request.json();
-    const { contentType, tone, context } = body;
+    const body = await request.json();
+    const { contentType, tone, context, config } = body;
 
     const systemPrompt = WRITER_PROMPTS[contentType];
     if (!systemPrompt) {
@@ -48,8 +48,7 @@ Contexto do lead:
 
 Gere o conteúdo conforme solicitado.`;
 
-    const rawText = await analyzeText(systemPrompt + "\n\n" + userMessage);
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(systemPrompt + "\n\n" + userMessage, config);
 
     
 
@@ -64,7 +63,7 @@ Gere o conteúdo conforme solicitado.`;
     return NextResponse.json({
       ...parsed,
       contentType,
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      tokensUsed: (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
     });
   } catch (error) {
     console.error("Writer agent error:", error);

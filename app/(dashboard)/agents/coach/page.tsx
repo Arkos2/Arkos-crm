@@ -52,10 +52,19 @@ export default function CoachPage() {
     if (!selectedSeller) return;
     setIsGenerating(true);
     try {
+      const savedSettings = localStorage.getItem("arkos_ai_settings");
+      const aiConfig = savedSettings ? JSON.parse(savedSettings) : {};
+
       const res = await fetch("/api/agents/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seller: selectedSeller }),
+        body: JSON.stringify({ 
+          seller: selectedSeller,
+          config: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature
+          }
+        }),
       });
 
       if (!res.ok) throw new Error();

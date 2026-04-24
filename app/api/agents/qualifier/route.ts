@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { QUALIFIER_SYSTEM_PROMPT, QUALIFIER_FIRST_MESSAGE } from "@/lib/ai/prompts/qualifier";
 import { ChatMessage, BANTCollection } from "@/lib/types/agent";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -16,6 +16,7 @@ interface QualifierRequest {
     company?: string;
     source?: string;
   };
+  config?: any;
 }
 
 interface QualifierResponse {
@@ -53,7 +54,7 @@ function parseClaude(text: string): QualifierResponse {
 export async function POST(request: NextRequest) {
   try {
     const body: QualifierRequest = await request.json();
-    const { leadId, messages, isFirstMessage, leadContext } = body;
+    const { leadId, messages, isFirstMessage, leadContext, config } = body;
 
     // 1. Primeira mensagem — retornar template e salvar no banco
     if (isFirstMessage && leadId) {
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ─── CHAMADA PARA ANTHROPIC ───
+    // ─── CHAMADA PARA AI ───
     const anthropicMessages = messages
       .filter((m) => m.role !== "system")
       .map((m) => ({
@@ -108,8 +109,7 @@ export async function POST(request: NextRequest) {
 Use essas informações para personalizar a conversa.`;
     }
 
-    const rawText = await analyzeText(systemPrompt + "\n\n" + JSON.stringify(anthropicMessages));
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(systemPrompt + "\n\n" + JSON.stringify(anthropicMessages), config);
 
     const parsed = parseClaude(rawText);
 
@@ -147,7 +147,7 @@ Use essas informações para personalizar a conversa.`;
         timeline: parsed.bant?.timeline || 0,
         total: (parsed.bant?.budget || 0) + (parsed.bant?.authority || 0) + (parsed.bant?.need || 0) + (parsed.bant?.timeline || 0),
       },
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      tokensUsed: (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
     });
   } catch (error) {
     console.error("Qualifier agent error:", error);

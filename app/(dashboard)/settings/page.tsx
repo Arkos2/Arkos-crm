@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Workflow, TeamMember, Integration,
   PipelineConfig, PipelineStageConfig, CustomField, TeamRole,
@@ -59,6 +59,25 @@ type SettingsTab =
   | "integrations"
   | "notifications"
   | "ai";
+
+interface AISettings {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  language: string;
+  tone: 'formal' | 'professional' | 'casual';
+  companyContext: string;
+  agentAutonomy: {
+    qualifier: 'off' | 'suggest' | 'full';
+    writer: 'off' | 'suggest' | 'full';
+    followup: 'off' | 'suggest' | 'full';
+    prospector: 'off' | 'suggest' | 'full';
+    analyst: 'off' | 'suggest' | 'full';
+    coach: 'off' | 'suggest' | 'full';
+  };
+  monthlyTokenBudget: number;
+  tokensUsedThisMonth: number;
+}
 
 const SETTINGS_NAV: Array<{
   id: SettingsTab;
@@ -134,17 +153,30 @@ export default function SettingsPage() {
     },
     digestFrequency: "realtime" as const,
   });
-  const [aiSettings, setAiSettings] = useState({
-    model: "claude-3-5-sonnet-20241022",
-    temperature: 0.7,
-    maxTokens: 2048,
-    language: "pt-BR",
-    tone: "professional",
-    companyContext: "",
-    agentAutonomy: { qualifier: "suggest", writer: "suggest", followup: "suggest", prospector: "suggest", analyst: "suggest", coach: "suggest" },
-    monthlyTokenBudget: 0,
-    tokensUsedThisMonth: 0,
+  const [aiSettings, setAiSettings] = useState<AISettings>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("arkos_ai_settings");
+      if (saved) return JSON.parse(saved);
+    }
+    return {
+      model: "gemini-1.5-flash",
+      temperature: 0.7,
+      maxTokens: 2048,
+      language: "pt-BR",
+      tone: "professional",
+      companyContext: "",
+      agentAutonomy: { qualifier: "suggest", writer: "suggest", followup: "suggest", prospector: "suggest", analyst: "suggest", coach: "suggest" },
+      monthlyTokenBudget: 0,
+      tokensUsedThisMonth: 0,
+    };
   });
+
+  // Autosave AI settings
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("arkos_ai_settings", JSON.stringify(aiSettings));
+    }
+  }, [aiSettings]);
   const [generalSettings, setGeneralSettings] = useState({
     companyName: "",
     companyWebsite: "",
@@ -927,12 +959,24 @@ export default function SettingsPage() {
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-medium text-text-secondary mb-1.5 block">Modelo</label>
-                    <select className="w-full h-9 px-3 rounded-lg text-sm bg-arkos-bg border border-arkos-border text-text-primary focus:outline-none focus:border-arkos-blue transition-all">
-                      <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Recomendado)</option>
-                      <option value="claude-3-haiku-20240307">Claude 3 Haiku (Mais rápido)</option>
-                      <option value="claude-3-opus-20240229">Claude 3 Opus (Mais poderoso)</option>
+                    <label className="text-xs font-medium text-text-secondary mb-1.5 block">Modelo de IA Principal</label>
+                    <select 
+                      value={aiSettings.model}
+                      onChange={(e) => setAiSettings((p: AISettings) => ({ ...p, model: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-lg text-sm bg-arkos-bg border border-arkos-border text-text-primary focus:outline-none focus:border-arkos-blue transition-all"
+                    >
+                      <optgroup label="Google (Padrão)">
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra rápido)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Raciocínio complexo)</option>
+                      </optgroup>
+                      <optgroup label="Anthropic (Claude)">
+                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Excelente escrita)</option>
+                        <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Rápido e conciso)</option>
+                      </optgroup>
                     </select>
+                    <p className="text-2xs text-text-muted mt-1.5">
+                      O ARKOS tentará usar este modelo primeiro. Se houver falha, ele alternará automaticamente para o outro provedor (Fallback).
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -944,7 +988,7 @@ export default function SettingsPage() {
                       <input
                         type="range" min="0" max="1" step="0.1"
                         value={aiSettings.temperature}
-                        onChange={(e) => setAiSettings(p => ({ ...p, temperature: Number(e.target.value) }))}
+                        onChange={(e) => setAiSettings((p: AISettings) => ({ ...p, temperature: Number(e.target.value) }))}
                         className="w-full accent-arkos-blue"
                       />
                       <div className="flex justify-between text-2xs text-text-muted mt-0.5">
@@ -961,7 +1005,7 @@ export default function SettingsPage() {
                         {["formal", "professional", "casual"].map(tone => (
                           <button
                             key={tone}
-                            onClick={() => setAiSettings(p => ({ ...p, tone: tone as typeof p.tone }))}
+                            onClick={() => setAiSettings((p: AISettings) => ({ ...p, tone: tone as AISettings['tone'] }))}
                             className={cn(
                               "py-1.5 rounded-lg border text-2xs font-medium capitalize transition-all",
                               aiSettings.tone === tone
@@ -982,16 +1026,15 @@ export default function SettingsPage() {
                     </label>
                     <textarea
                       value={aiSettings.companyContext}
-                      onChange={(e) => setAiSettings(p => ({ ...p, companyContext: e.target.value }))}
+                      onChange={(e) => setAiSettings((p: AISettings) => ({ ...p, companyContext: e.target.value }))}
                       rows={4}
                       className="w-full px-3 py-2.5 rounded-xl text-sm resize-none bg-arkos-bg border border-arkos-border text-text-primary placeholder:text-text-muted focus:outline-none focus:border-arkos-blue transition-all"
                     />
-                    <p className="text-2xs text-text-muted mt-1">
-                      Este contexto é injetado nos prompts de todos os agentes IA.
+                    <p className="text-2xs text-text-muted mt-2 leading-relaxed italic">
+                      Dica: Descreva o tom de voz e produtos para os agentes.
                     </p>
                   </div>
-                </div>
-              </Card>
+                </Card>
 
               {/* Autonomia dos agentes */}
               <Card>
@@ -1022,9 +1065,9 @@ export default function SettingsPage() {
                           {["off", "suggest", "full"].map((opt) => (
                             <button
                               key={opt}
-                              onClick={() => setAiSettings(p => ({
+                              onClick={() => setAiSettings((p: AISettings) => ({
                                 ...p,
-                                agentAutonomy: { ...p.agentAutonomy, [agent]: opt as "full" | "suggest" | "off" }
+                                agentAutonomy: { ...p.agentAutonomy, [agent]: opt as AISettings['agentAutonomy']['qualifier'] }
                               }))}
                               className={cn(
                                 "px-2.5 py-1 rounded-lg text-2xs font-medium capitalize transition-all border",
@@ -1052,7 +1095,14 @@ export default function SettingsPage() {
               </Card>
 
               <div className="flex justify-end">
-                <Button variant="gold" size="sm" onClick={() => toast.success("Configurações de IA salvas!")}>
+                <Button 
+                  variant="gold" 
+                  size="sm" 
+                  onClick={() => {
+                    localStorage.setItem("arkos_ai_settings", JSON.stringify(aiSettings));
+                    toast.success("Configurações de IA salvas no navegador!");
+                  }}
+                >
                   Salvar Configurações
                 </Button>
               </div>

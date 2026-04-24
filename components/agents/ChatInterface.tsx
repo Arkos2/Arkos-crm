@@ -46,6 +46,9 @@ export function ChatInterface({
 
     setIsLoading(true);
     try {
+      const savedSettings = localStorage.getItem("arkos_ai_settings");
+      const aiConfig = savedSettings ? JSON.parse(savedSettings) : {};
+
       const res = await fetch("/api/agents/qualifier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,6 +60,10 @@ export function ChatInterface({
             name: conversation.leadName,
             company: conversation.company,
           },
+          config: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature
+          }
         }),
       });
 
@@ -106,6 +113,9 @@ export function ChatInterface({
     setIsLoading(true);
 
     try {
+      const savedSettings = localStorage.getItem("arkos_ai_settings");
+      const aiConfig = savedSettings ? JSON.parse(savedSettings) : {};
+
       const res = await fetch("/api/agents/qualifier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,6 +129,10 @@ export function ChatInterface({
             name: conversation.leadName,
             company: conversation.company,
           },
+          config: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature
+          }
         }),
       });
 

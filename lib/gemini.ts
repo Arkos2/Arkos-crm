@@ -29,8 +29,9 @@ export async function analyzeImage(
   return result.response.text();
 }
 
-export async function analyzeText(prompt: string): Promise<string> {
-  const model = getClient().getGenerativeModel({ model: "gemini-flash-latest" });
+export async function analyzeText(prompt: string, customModel?: string): Promise<string> {
+  const modelName = customModel || "gemini-1.5-flash";
+  const model = getClient().getGenerativeModel({ model: modelName });
   const result = await model.generateContent(prompt);
   return result.response.text();
 }

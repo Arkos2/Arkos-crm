@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { ANALYST_SYSTEM_PROMPT } from "@/lib/ai/prompts/analyst";
 
 
@@ -8,7 +8,7 @@ import { ANALYST_SYSTEM_PROMPT } from "@/lib/ai/prompts/analyst";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { pipelineData } = body;
+    const { pipelineData, config } = body;
 
     const userMessage = `Analise os seguintes dados do pipeline da ARKOS e gere insights acionáveis:
 
@@ -17,8 +17,7 @@ ${JSON.stringify(pipelineData, null, 2)}
 
 Gere entre 3 e 6 insights prioritários baseados nesses dados.`;
 
-    const rawText = await analyzeText(ANALYST_SYSTEM_PROMPT + "\n\n" + userMessage);
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(ANALYST_SYSTEM_PROMPT + "\n\n" + userMessage, config);
 
     
 
@@ -36,7 +35,7 @@ Gere entre 3 e 6 insights prioritários baseados nesses dados.`;
         id: `insight-${Date.now()}-${i}`,
         createdAt: new Date().toISOString(),
       })),
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      tokensUsed: (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
     });
   } catch (error) {
     console.error("Analyst agent error:", error);

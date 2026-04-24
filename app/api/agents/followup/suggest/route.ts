@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 
 
 
@@ -35,7 +35,7 @@ Retorne JSON:
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { conversation, lastMessage, context } = body;
+    const { conversation, lastMessage, context, config } = body;
 
     const userMessage = `Contexto do negócio:
 - Lead: ${context.contactName} (${context.company || "empresa não identificada"})
@@ -51,8 +51,7 @@ ${conversation.map((m: { senderName: string; content: string }) => `[${m.senderN
 
 Sugira a melhor resposta.`;
 
-    const rawText = await analyzeText(REPLY_SUGGESTION_PROMPT + "\n\n" + userMessage);
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(REPLY_SUGGESTION_PROMPT + "\n\n" + userMessage, config);
 
     
 
@@ -66,7 +65,7 @@ Sugira a melhor resposta.`;
 
     return NextResponse.json({
       ...parsed,
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      tokensUsed: (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
     });
   } catch (error) {
     console.error("Follow-up suggest error:", error);

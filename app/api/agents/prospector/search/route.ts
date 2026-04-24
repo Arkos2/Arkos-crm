@@ -1,8 +1,9 @@
-
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { OUTBOUND_SEARCH_PROMPT } from "@/lib/ai/prompts/prospector";
 import { OutboundSearchQuery } from "@/lib/types/prospector";
+
+export const runtime = "edge";
 
 
 
@@ -17,13 +18,13 @@ const SIZE_LABELS: Record<string, string> = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const query: OutboundSearchQuery = body.query;
+    const { query, config } = body;
 
     const userMessage = `Gere uma lista de ${query.limit || 8} empresas para prospecção outbound B2B com os seguintes critérios:
 
 ## CRITÉRIOS DE BUSCA
 - Setores: ${query.industries.join(", ")}
-- Tamanhos: ${query.sizes.map((s) => SIZE_LABELS[s] || s).join(", ")}
+- Tamanhos: ${query.sizes.map((s: string) => SIZE_LABELS[s] || s).join(", ")}
 - Cargos alvo: ${query.roles.join(", ")}
 - Localização: ${query.locations.join(", ") || "Brasil (qualquer estado)"}
 - Nicho Específico: ${query.nicheDescription || "Não especificado"}
@@ -34,8 +35,7 @@ export async function POST(request: NextRequest) {
 Gere empresas com FIT scores variados (algumas high priority, algumas medium, algumas low) para ser realista.
 Foque em empresas do Brasil com características verossímeis.`;
 
-    const rawText = await analyzeText(OUTBOUND_SEARCH_PROMPT + "\n\n" + userMessage);
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(OUTBOUND_SEARCH_PROMPT + "\n\n" + userMessage, config);
 
     
 
@@ -68,7 +68,7 @@ Foque em empresas do Brasil com características verossímeis.`;
       prospects: normalized,
       totalFound: normalized.length,
       searchedAt: new Date().toISOString(),
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      tokensUsed: (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
       query,
     });
   } catch (error) {

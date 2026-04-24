@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { SellerPerformance } from "@/lib/types/coach";
 
 
@@ -53,7 +53,7 @@ Seja honesto — se o vendedor está bem, diga. Se está mal, diga com respeito.
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { seller }: { seller: SellerPerformance } = body;
+    const { seller, config }: { seller: SellerPerformance; config?: any } = body;
 
     const revenueProgress = Math.round(
       (seller.revenue / seller.revenueTarget) * 100
@@ -92,8 +92,7 @@ ${seller.improvements.join("\n")}
 
 Gere 2-4 tips altamente personalizados e acionáveis para este vendedor.`;
 
-    const rawText = await analyzeText(COACH_SYSTEM_PROMPT + "\n\n" + userMessage);
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(COACH_SYSTEM_PROMPT + "\n\n" + userMessage, config);
 
     
 
@@ -112,7 +111,7 @@ Gere 2-4 tips altamente personalizados e acionáveis para este vendedor.`;
         createdAt: new Date().toISOString(),
       })),
       tokensUsed:
-        response.usage.input_tokens + response.usage.output_tokens,
+        (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
     });
   } catch (error) {
     console.error("Coach agent error:", error);

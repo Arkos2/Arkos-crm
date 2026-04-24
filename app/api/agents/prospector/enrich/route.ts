@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeText } from "@/lib/gemini";
+import { generateText } from "@/lib/ai/service";
 import { INBOUND_ENRICHMENT_PROMPT } from "@/lib/ai/prompts/prospector";
 
 
@@ -8,7 +8,7 @@ import { INBOUND_ENRICHMENT_PROMPT } from "@/lib/ai/prompts/prospector";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prospect } = body;
+    const { prospect, config } = body;
 
     const userMessage = `Analise e enriqueça este lead inbound que acabou de chegar:
 
@@ -24,8 +24,7 @@ export async function POST(request: NextRequest) {
 
 Enriqueça, calcule o FIT Score e sugira a melhor abordagem.`;
 
-    const rawText = await analyzeText(INBOUND_ENRICHMENT_PROMPT + "\n\n" + userMessage);
-    const response = { usage: { input_tokens: 0, output_tokens: 0 } };
+    const { text: rawText, usage } = await generateText(INBOUND_ENRICHMENT_PROMPT + "\n\n" + userMessage, config);
 
     
 
@@ -40,7 +39,7 @@ Enriqueça, calcule o FIT Score e sugira a melhor abordagem.`;
 
     return NextResponse.json({
       ...parsed,
-      tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
+      tokensUsed: (usage?.input_tokens || 0) + (usage?.output_tokens || 0),
       enrichedAt: new Date().toISOString(),
     });
   } catch (error) {

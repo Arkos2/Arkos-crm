@@ -72,10 +72,19 @@ export default function ProspectorPage() {
     );
 
     try {
+      const savedSettings = localStorage.getItem("arkos_ai_settings");
+      const aiConfig = savedSettings ? JSON.parse(savedSettings) : {};
+
       const res = await fetch("/api/agents/prospector/enrich", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prospect }),
+        body: JSON.stringify({ 
+          prospect,
+          config: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature
+          }
+        }),
       });
 
       if (!res.ok) throw new Error();
