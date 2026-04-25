@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "preview": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare preview",
-    "deploy": "npm run build:cloudflare",
+    "deploy": "npm run build:cloudflare && wrangler deploy",
     "build:cloudflare": "npm run build && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "cf-typegen": "wrangler types"
   },
