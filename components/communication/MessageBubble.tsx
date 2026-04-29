@@ -34,6 +34,12 @@ export function MessageBubble({
   const isOutbound = message.direction === "outbound";
   const isAI = message.isAIGenerated || message.senderType === "ai_agent";
 
+  // Parse media from content
+  const mediaMatch = message.content.match(/\[MEDIA:(image|audio|document)\]\s*([^\s]+)/);
+  const mediaType = mediaMatch ? mediaMatch[1] : null;
+  const mediaUrl = mediaMatch ? mediaMatch[2] : null;
+  const cleanContent = message.content.replace(/\[MEDIA:(image|audio|document)\]\s*([^\s]+)/g, "").trim();
+
   return (
     <div
       className={cn(
@@ -115,7 +121,33 @@ export function MessageBubble({
             message.subject && "rounded-t-none"
           )}
         >
-          <p className="whitespace-pre-line">{message.content}</p>
+          {cleanContent && <p className="whitespace-pre-line">{cleanContent}</p>}
+
+          {/* Render Media */}
+          {mediaType && mediaUrl && (
+            <div className={cn("mt-2 overflow-hidden rounded-xl", !cleanContent && "mt-0")}>
+              {mediaType === "image" && (
+                <img src={mediaUrl} alt="Mídia enviada" className="w-full max-w-[240px] h-auto rounded-lg" />
+              )}
+              {mediaType === "audio" && (
+                <audio controls className="max-w-[240px] h-10">
+                  <source src={mediaUrl} type="audio/mpeg" />
+                  Seu navegador não suporta áudio.
+                </audio>
+              )}
+              {mediaType === "document" && (
+                <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 bg-black/10 rounded-lg hover:bg-black/20 transition-colors">
+                  <div className="p-2 bg-arkos-bg rounded text-arkos-blue-light">
+                    📄
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold truncate">Documento PDF</p>
+                    <p className="text-2xs opacity-70">Clique para abrir</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (

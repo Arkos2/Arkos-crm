@@ -5,12 +5,15 @@ import { cn, formatDate } from "@/lib/utils";
 import {
   Building2, ExternalLink, Plus,
   CheckCircle2, Clock, AlertCircle, Users,
-} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { NewPortalModal } from "@/components/portal/NewPortalModal";
 
 export const metadata: Metadata = { title: "Portal do Cliente" };
 
 export default function PortalManagementPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="space-y-6">
 
@@ -28,8 +31,7 @@ export default function PortalManagementPage() {
           variant="gold"
           size="sm"
           icon={<Plus className="h-3.5 w-3.5" />}
-          disabled
-          title="Em desenvolvimento"
+          onClick={() => setIsModalOpen(true)}
         >
           Novo Portal
         </Button>
@@ -171,6 +173,7 @@ export default function PortalManagementPage() {
                 size="sm"
                 className="mt-6"
                 icon={<Plus className="h-3.5 w-3.5" />}
+                onClick={() => setIsModalOpen(true)}
               >
                 Novo Portal
               </Button>
@@ -178,6 +181,11 @@ export default function PortalManagementPage() {
           </div>
         )}
       </div>
+
+      <NewPortalModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }

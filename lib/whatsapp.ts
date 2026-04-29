@@ -62,15 +62,17 @@ interface SendResult {
 const GRAPH_API_VERSION = "v21.0";
 const BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
+import { getEnv } from "./env";
+
 function getHeaders() {
   return {
-    Authorization: `Bearer ${process.env.META_ACCESS_TOKEN}`,
+    Authorization: `Bearer ${getEnv("META_ACCESS_TOKEN")}`,
     "Content-Type": "application/json",
   };
 }
 
 function getPhoneNumberId() {
-  return process.env.WABA_PHONE_NUMBER_ID!;
+  return getEnv("WABA_PHONE_NUMBER_ID")!;
 }
 
 // ─── FORMATAR NÚMERO ───

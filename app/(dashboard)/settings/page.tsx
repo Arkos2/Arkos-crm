@@ -161,7 +161,7 @@ export default function SettingsPage() {
       if (saved) return JSON.parse(saved);
     }
     return {
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       temperature: 0.7,
       maxTokens: 2048,
       language: "pt-BR",
@@ -967,12 +967,13 @@ export default function SettingsPage() {
                       className="w-full h-9 px-3 rounded-lg text-sm bg-arkos-bg border border-arkos-border text-text-primary focus:outline-none focus:border-arkos-blue transition-all"
                     >
                       <optgroup label="Google (Padrão)">
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra rápido)</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Ultra rápido)</option>
                         <option value="gemini-1.5-pro">Gemini 1.5 Pro (Raciocínio complexo)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Versão anterior)</option>
                       </optgroup>
                       <optgroup label="Anthropic (Claude)">
-                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Excelente escrita)</option>
-                        <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Rápido e conciso)</option>
+                        <option value="claude-sonnet-4-5">Claude Sonnet 4.5 (Excelente escrita)</option>
+                        <option value="claude-haiku-4-5">Claude Haiku 4.5 (Rápido e conciso)</option>
                       </optgroup>
                     </select>
                     <p className="text-2xs text-text-muted mt-1.5">

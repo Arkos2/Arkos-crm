@@ -43,8 +43,20 @@ Foque em empresas do Brasil com características verossímeis.`;
 
     let prospects = [];
     try {
-      const arrayMatch = rawText.match(/\[[\s\S]*\]/);
-      prospects = arrayMatch ? JSON.parse(arrayMatch[0]) : [];
+      try {
+        prospects = JSON.parse(rawText);
+      } catch {
+        const arrayMatch = rawText.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          try {
+            prospects = JSON.parse(arrayMatch[0]);
+          } catch {
+            const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const cleanMatch = cleaned.match(/\[[\s\S]*\]/);
+            prospects = cleanMatch ? JSON.parse(cleanMatch[0]) : [];
+          }
+        }
+      }
     } catch {
       prospects = [];
     }

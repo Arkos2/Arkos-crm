@@ -1,14 +1,13 @@
 // lib/gemini.ts — lazy initialization: API key only required at runtime, not build time
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { getEnv } from "./env";
+
 function getClient(): GoogleGenerativeAI {
-  // No Cloudflare, as variáveis podem estar no process.env ou no contexto global
-  const apiKey = process.env.GEMINI_API_KEY || 
-                 process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
-                 (globalThis as any).GEMINI_API_KEY;
+  const apiKey = getEnv("GEMINI_API_KEY");
 
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY não configurada. Adicione a variável de ambiente no painel da Cloudflare.");
+    throw new Error("GEMINI_API_KEY não configurada no Cloudflare.");
   }
   return new GoogleGenerativeAI(apiKey);
 }
@@ -34,7 +33,7 @@ export async function analyzeImage(
 }
 
 export async function analyzeText(prompt: string, customModel?: string): Promise<string> {
-  const modelName = customModel || "gemini-1.5-flash";
+  const modelName = customModel || "gemini-2.0-flash";
   const model = getClient().getGenerativeModel({ model: modelName });
   const result = await model.generateContent(prompt);
   return result.response.text();

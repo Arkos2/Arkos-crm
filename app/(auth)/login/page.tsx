@@ -284,38 +284,6 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative flex items-center gap-3">
-            <div className="flex-1 h-px bg-arkos-border" />
-            <span className="text-xs text-text-muted">ou</span>
-            <div className="flex-1 h-px bg-arkos-border" />
-          </div>
-
-          {/* Demo account */}
-          <div className="p-4 rounded-2xl border border-arkos-blue/20 bg-arkos-blue/5 space-y-3">
-            <p className="text-xs font-semibold text-arkos-blue-light text-center">
-              🎯 Conta de Demonstração
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-2xs text-text-secondary">
-              <div className="flex items-center gap-1.5">
-                <Mail className="h-3 w-3 text-text-muted" />
-                demo@arkos.com.br
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Lock className="h-3 w-3 text-text-muted" />
-                arkos@2025
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setFormData({ email: "demo@arkos.com.br", password: "arkos@2025", rememberMe: false });
-              }}
-              className="w-full py-2 rounded-xl border border-arkos-blue/30 text-xs font-medium text-arkos-blue-light hover:bg-arkos-blue/10 transition-all"
-            >
-              Preencher automaticamente
-            </button>
-          </div>
-
           {/* Link registro */}
           <p className="text-center text-xs text-text-muted">
             Não tem uma conta?{" "}

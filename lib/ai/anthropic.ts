@@ -1,8 +1,8 @@
 import { AIConfig, AIResponse } from "./types";
 
 const CLAUDE_MODELS = {
-  sonnet: "claude-3-5-sonnet-20241022",
-  haiku: "claude-3-5-haiku-20241022",
+  sonnet: "claude-sonnet-4-5",
+  haiku: "claude-haiku-4-5",
 };
 
 export async function callClaude(prompt: string, config?: AIConfig): Promise<AIResponse> {

@@ -6,14 +6,9 @@ import { MessageBubble } from "@/components/communication/MessageBubble";
 import { AISuggestionBar } from "@/components/communication/AISuggestionBar";
 import { Avatar, Badge, Button, EmptyState } from "@/components/ui";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import {
-  Search, Mail, MessageSquare, Globe, Phone,
-  Bot, Send, Paperclip, Smile, Zap,
-  Filter, MoreHorizontal, Phone as PhoneIcon,
-  Calendar, FileText, ArrowRight, RefreshCw,
-  CheckCheck, Archive,
-} from "lucide-react";
+import { Search, Mail, MessageSquare, Globe, Phone, Bot, Send, Paperclip, Smile, Zap, Filter, MoreHorizontal, Phone as PhoneIcon, Calendar, FileText, ArrowRight, RefreshCw, CheckCheck, Archive } from "lucide-react";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 const CHANNEL_CONFIG: Record<string, {
   label: string;
@@ -45,6 +40,7 @@ export default function CommunicationPage() {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const supabase = createClient();
 
   const selectedConv = conversations.find((c) => c.id === selectedId) || null;
 
@@ -66,6 +62,50 @@ export default function CommunicationPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selectedConv?.messages]);
+
+  // Carregar dados iniciais
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await fetch("/api/conversations");
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setConversations(data);
+        
+        // Se houver conversas e nenhuma selecionada, selecionar a primeira
+        if (data.length > 0 && !selectedId) {
+          setSelectedId(data[0].id);
+        }
+      } catch (error) {
+        toast.error("Erro ao carregar conversas");
+      }
+    };
+
+    fetchConversations();
+  }, []);
+
+  // Inscrição Realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        async () => {
+          // Recarregar conversas quando houver mudanças nas mensagens
+          const res = await fetch("/api/conversations");
+          if (res.ok) {
+            const data = await res.json();
+            setConversations(data);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   // Gerar sugestão da IA
   const generateSuggestion = useCallback(async () => {
@@ -110,58 +150,37 @@ export default function CommunicationPage() {
     }
   }, [selectedConv, activeChannel]);
 
-  // Enviar mensagem
+  // Enviar mensagem real
   const sendMessage = async () => {
     const text = inputValue.trim();
     if (!text || !selectedConv || isSending) return;
 
     setIsSending(true);
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: selectedConv.id,
-      channel: activeChannel as Message["channel"],
-      direction: "outbound",
-      senderType: "user",
-      senderName: "Maria Santos",
-      content: text,
-      contentType: "text",
-      status: "sending",
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      // 1. Enviar para a API de mensagens
+      const res = await fetch("/api/messages/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: selectedConv.id,
+          content: text,
+          phone: (selectedConv as any).metadata?.phone || selectedConv.messages.find(m => m.direction === 'inbound')?.senderId
+        }),
+      });
 
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selectedConv.id
-          ? {
-              ...c,
-              messages: [...c.messages, newMessage],
-              lastMessage: newMessage,
-              updatedAt: new Date().toISOString(),
-            }
-          : c
-      )
-    );
+      if (!res.ok) throw new Error("Erro ao enviar mensagem");
 
-    setInputValue("");
-    setAiSuggestion(null);
+      setInputValue("");
+      setAiSuggestion(null);
+      toast.success("Mensagem enviada");
 
-    // Simular envio
-    setTimeout(() => {
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === selectedConv.id
-            ? {
-                ...c,
-                messages: c.messages.map((m) =>
-                  m.id === newMessage.id ? { ...m, status: "sent" } : m
-                ),
-              }
-            : c
-        )
-      );
+      // O Realtime se encarregará de atualizar a lista de mensagens no estado
+    } catch (error) {
+      toast.error("Falha ao enviar mensagem");
+    } finally {
       setIsSending(false);
-    }, 800);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -497,12 +516,13 @@ export default function CommunicationPage() {
                   {/* Toolbar */}
                   <div className="flex items-center gap-1">
                     {[
-                      { icon: Paperclip, label: "Anexar" },
+                      { icon: Paperclip, label: "Anexar", action: () => setInputValue(prev => prev + "[User attached an image: clinic_procedure.png] ") },
                       { icon: Smile, label: "Emoji" },
-                    ].map(({ icon: Icon, label }) => (
+                    ].map(({ icon: Icon, label, action }) => (
                       <button
                         key={label}
                         title={label}
+                        onClick={action}
                         className="p-2 rounded-lg hover:bg-arkos-surface-2 text-text-muted hover:text-text-primary transition-all"
                       >
                         <Icon className="h-4 w-4" />

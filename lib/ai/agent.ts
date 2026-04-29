@@ -42,13 +42,17 @@ export interface AgentResponse {
   internalNote: string;
   useButtons?: boolean;
   buttons?: Array<{ id: string; title: string }>;
+  media?: {
+    type: "image" | "audio" | "document";
+    url: string;
+  };
 }
 
-// ─── SYSTEM PROMPT DO LUCAS (REVISADO PELA ARKOS) ───
-const LUCAS_SYSTEM_PROMPT = `Você é Lucas, o SDR (Sales Development Representative) digital da ARKOS — empresa especializada em automação empresarial com IA.
+// ─── SYSTEM PROMPT DA SOFIA ───
+const SOFIA_SYSTEM_PROMPT = `Você é Sofia, a consultora e SDR digital da ARKOS — empresa especializada em automação empresarial com IA.
 
 ## SUA PERSONALIDADE
-- Nome: Lucas (não mencione que é IA, a menos que perguntado diretamente)
+- Nome: Sofia (não mencione que é IA, a menos que perguntado diretamente)
 - Tom: Profissional, empático, direto e levemente descontraído
 - Nunca pressione. Nunca seja insistente. Respeite o ritmo do lead.
 - Limite: 2-3 parágrafos por mensagem. WhatsApp não é e-mail.
@@ -81,6 +85,11 @@ Paralelo ao SPIN, colete BANT naturalmente:
 3. Qualificação e Apresentação de valor (BANT-B/A)
 4. Proposta de Reunião (BANT ≥ 70) 
 
+## MÍDIA (ÁUDIO, IMAGEM, PDF)
+- Se o usuário perguntar sobre a ARKOS, você pode enviar a apresentação: {"type": "document", "url": "/assets/arkos_presentation.png"}
+- Se o usuário (que tem uma clínica) perguntar como funciona ou pedir um exemplo de procedimento clínico, envie: {"type": "image", "url": "/assets/clinic_procedure.png"}
+- Seja assertiva ao enviar os arquivos e acompanhe com uma mensagem explicativa.
+
 ## FORMATO DE RESPOSTA (OBRIGATÓRIO JSON)
 Retorne SEMPRE um JSON válido:
 {
@@ -95,7 +104,11 @@ Retorne SEMPRE um JSON válido:
   "confidence": 0-100,
   "internalNote": "nota interna para o CRM",
   "useButtons": false,
-  "buttons": []
+  "buttons": [],
+  "media": {
+    "type": "image|audio|document",
+    "url": "/assets/..."
+  } // opcional
 }`;
 
 // ─── PROCESSAR MENSAGEM DO SDR (LUCAS) ───
@@ -142,7 +155,7 @@ export async function process_sdr_message(
 
 Responda à última mensagem do lead de forma natural e estratégica.`;
 
-    const { text: rawText } = await generateText(LUCAS_SYSTEM_PROMPT + "\n\n" + contextPrompt + "\n\n" + JSON.stringify(formattedHistory));
+    const { text: rawText } = await generateText(SOFIA_SYSTEM_PROMPT + "\n\n" + contextPrompt + "\n\n" + JSON.stringify(formattedHistory));
     
     // Extrair JSON
     let parsed: AgentResponse;
@@ -175,12 +188,17 @@ Responda à última mensagem do lead de forma natural e estratégica.`;
     }
 
     // 4. Salvar resposta no Log do BD
-    if (parsed.message) {
+    if (parsed.message || parsed.media) {
+      let finalContent = parsed.message || "";
+      if (parsed.media) {
+        finalContent += `\n[MEDIA:${parsed.media.type}] ${parsed.media.url}`;
+      }
+
       await supabase.from("messages").insert({
         lead_id,
         wa_message_id: "internal_" + Date.now().toString(),
         role: "assistant",
-        content: parsed.message,
+        content: finalContent.trim(),
       });
     }
 
@@ -202,8 +220,9 @@ function getDefaultResponse(): AgentResponse {
 }
 
 function getStatusFromAction(action: string, currentStatus: string): string {
-  if (action === "schedule_meeting") return "Gold >300k"; // Ou status de agendado
+  if (action === "schedule_meeting") return "Reunião Agendada";
+  if (action === "send_proposal") return "Proposta Enviada";
   if (action === "transfer_human") return "Handoff Humano";
-  if (action === "disqualify") return "inativo";
+  if (action === "disqualify") return "Inativo";
   return currentStatus;
 }
